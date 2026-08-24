@@ -1,5 +1,5 @@
 interface AvatarProps {
-  src?: string;
+  src?: string | null;
   name: string;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;

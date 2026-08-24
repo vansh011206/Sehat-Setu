@@ -4,6 +4,7 @@ URL patterns for Doctors, Specialties, Reviews, and Doctor Availability.
 
 from django.urls import path
 from apps.appointments.views import DoctorAvailabilityView
+from apps.dashboard.views import DoctorPatientsListView
 from .views import (
     DoctorDetailView,
     DoctorListView,
@@ -19,4 +20,6 @@ urlpatterns = [
     path("<int:pk>/", DoctorDetailView.as_view(), name="doctor-detail"),
     path("<int:pk>/reviews/", DoctorReviewsListCreateView.as_view(), name="doctor-reviews"),
     path("<int:pk>/availability/", DoctorAvailabilityView.as_view(), name="doctor-availability"),
+    path("<int:pk>/patients/", DoctorPatientsListView.as_view(), name="doctor-patients"),
 ]
+

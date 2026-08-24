@@ -1,21 +1,30 @@
 """
-Serializers for Notifications.
+Serializers for Notifications in SehatSetu.
 """
 
 from rest_framework import serializers
+from apps.accounts.serializers import UserMinimalSerializer
 from .models import Notification
 
 
 class NotificationSerializer(serializers.ModelSerializer):
+    actor = UserMinimalSerializer(read_only=True)
+
     class Meta:
         model = Notification
         fields = (
             "id",
+            "type",
             "title",
             "message",
-            "notification_type",
+            "icon",
+            "data",
             "is_read",
-            "link_url",
+            "actor",
             "created_at",
         )
-        read_only_fields = ("id", "title", "message", "notification_type", "link_url", "created_at")
+        read_only_fields = (
+            "id",
+            "actor",
+            "created_at",
+        )

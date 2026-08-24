@@ -350,6 +350,13 @@ class AppointmentListCreateView(APIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
+        # Notify both Doctor & Patient of confirmed booking
+        try:
+            from apps.notifications.services import NotificationService
+            NotificationService.notify_appointment_booked(appointment)
+        except Exception:
+            pass
+
         return Response(
             AppointmentSerializer(appointment, context={"request": request}).data,
             status=status.HTTP_201_CREATED,
@@ -436,6 +443,13 @@ class CancelAppointmentView(APIView):
 
         appointment.cancellation_reason = reason
         appointment.save(update_fields=["status", "cancellation_reason", "updated_at"])
+
+        # Notify both Doctor & Patient of cancellation
+        try:
+            from apps.notifications.services import NotificationService
+            NotificationService.notify_appointment_cancelled(appointment, cancelled_by=request.user)
+        except Exception:
+            pass
 
         return Response(
             AppointmentSerializer(appointment, context={"request": request}).data,

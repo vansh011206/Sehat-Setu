@@ -3,11 +3,17 @@ URL patterns for Prescriptions.
 """
 
 from django.urls import path
-from .views import PrescriptionDetailView, PrescriptionListCreateView
+from .views import (
+    DoctorPrescriptionsListView,
+    PatientPrescriptionsListView,
+    PrescriptionDetailView,
+    PrescriptionPDFDownloadView,
+    VerifyPrescriptionView,
+)
 
 app_name = "prescriptions"
 
 urlpatterns = [
-    path("", PrescriptionListCreateView.as_view(), name="prescription-list-create"),
     path("<int:pk>/", PrescriptionDetailView.as_view(), name="prescription-detail"),
+    path("<int:pk>/download/", PrescriptionPDFDownloadView.as_view(), name="prescription-download"),
 ]

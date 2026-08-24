@@ -7,20 +7,21 @@ import {
 } from "react";
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 
-export type ToastVariant = "success" | "error" | "info" | "warning";
+export type ToastVariant = "success" | "error" | "info" | "warning" | "danger";
 
 export interface ToastOptions {
   type?: ToastVariant;
   variant?: ToastVariant;
   title?: string;
-  message: string;
+  message?: string;
+  description?: string;
 }
 
 interface ToastItem {
   id: number;
   title?: string;
   message: string;
-  variant: ToastVariant;
+  variant: "success" | "error" | "info" | "warning";
 }
 
 export interface ToastContextType {
@@ -32,14 +33,14 @@ const ToastContext = createContext<ToastContextType | null>(null);
 
 let toastId = 0;
 
-const icons: Record<ToastVariant, typeof CheckCircle2> = {
+const icons: Record<"success" | "error" | "info" | "warning", typeof CheckCircle2> = {
   success: CheckCircle2,
   error: AlertCircle,
   info: Info,
   warning: AlertCircle,
 };
 
-const variantClasses: Record<ToastVariant, string> = {
+const variantClasses: Record<"success" | "error" | "info" | "warning", string> = {
   success: "bg-emerald-700 text-white shadow-md",
   error: "bg-red-700 text-white shadow-md",
   info: "bg-teal-800 text-white shadow-md",
@@ -54,15 +55,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       const id = ++toastId;
       let msg = "";
       let title: string | undefined;
-      let v: ToastVariant = variant;
+      let rawV: ToastVariant = variant;
 
       if (typeof messageOrOptions === "string") {
         msg = messageOrOptions;
       } else {
-        msg = messageOrOptions.message;
+        msg = messageOrOptions.message || messageOrOptions.description || "";
         title = messageOrOptions.title;
-        v = messageOrOptions.type || messageOrOptions.variant || "success";
+        rawV = messageOrOptions.type || messageOrOptions.variant || variant;
       }
+
+      const v: "success" | "error" | "info" | "warning" =
+        rawV === "danger" ? "error" : rawV;
 
       setToasts((prev) => [...prev, { id, message: msg, title, variant: v }]);
       setTimeout(() => {

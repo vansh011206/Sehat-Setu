@@ -1,249 +1,359 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   Calendar,
-  CheckCircle2,
+  Download,
+  ExternalLink,
   FileText,
-  Printer,
+  RefreshCw,
+  Search,
   ShieldCheck,
   Stethoscope,
 } from "lucide-react";
 import { AppLayout } from "../layouts/AppLayout";
-import { Badge } from "../components/ui/Badge";
+import { Breadcrumbs } from "../components/ui/Breadcrumbs";
 import { Button } from "../components/ui/Button";
+import { EmptyState } from "../components/ui/EmptyState";
 import { Modal } from "../components/ui/Modal";
+import { Skeleton } from "../components/ui/Skeleton";
+import { useAuthStore } from "../stores/authStore";
+import { prescriptionsApi, type PrescriptionDetail } from "../features/prescriptions/api";
 
-interface MedicineItem {
-  name: string;
-  dosage: string;
-  frequency: string;
-  duration: string;
-  instructions: string;
+function formatIndianDate(dateString: string | Date): string {
+  const d = new Date(dateString);
+  return d.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
-
-interface MockPrescription {
-  id: number;
-  doctorName: string;
-  specialty: string;
-  qualification: string;
-  registrationNumber: string;
-  patientName: string;
-  date: string;
-  diagnosis: string;
-  medicines: MedicineItem[];
-  notes: string;
-}
-
-const mockPrescriptions: MockPrescription[] = [
-  {
-    id: 101,
-    doctorName: "Dr. Rajesh Sharma",
-    specialty: "Cardiology",
-    qualification: "MBBS, MD (Cardiology), DM (AIIMS)",
-    registrationNumber: "MCI-CARD-2012-8874",
-    patientName: "Aarav Kumar",
-    date: "2026-08-11",
-    diagnosis: "Stage 1 Essential Hypertension & Mild Tachycardia",
-    medicines: [
-      {
-        name: "Telmisartan 40mg",
-        dosage: "1 Tablet",
-        frequency: "Once Daily (Morning)",
-        duration: "30 Days",
-        instructions: "After breakfast with water",
-      },
-      {
-        name: "Amlodipine 5mg",
-        dosage: "1 Tablet",
-        frequency: "Once Daily (Night)",
-        duration: "30 Days",
-        instructions: "Before bedtime",
-      },
-      {
-        name: "CoQ10 100mg Supplement",
-        dosage: "1 Capsule",
-        frequency: "Once Daily",
-        duration: "15 Days",
-        instructions: "After lunch",
-      },
-    ],
-    notes: "Reduce dietary sodium intake below 2g/day. Maintain regular BP log twice a week. Review after 4 weeks.",
-  },
-  {
-    id: 102,
-    doctorName: "Dr. Priya Patel",
-    specialty: "Dermatology",
-    qualification: "MBBS, MD (Dermatology)",
-    registrationNumber: "GMC-DERM-2015-4421",
-    patientName: "Aarav Kumar",
-    date: "2026-07-15",
-    diagnosis: "Contact Dermatitis & Skin Barrier Repair",
-    medicines: [
-      {
-        name: "Hydrocortisone 1% Cream",
-        dosage: "Thin layer",
-        frequency: "Twice daily",
-        duration: "7 Days",
-        instructions: "Apply locally on affected areas",
-      },
-      {
-        name: "Cetirizine 10mg",
-        dosage: "1 Tablet",
-        frequency: "1-0-0",
-        duration: "5 Days",
-        instructions: "If itching persists",
-      },
-    ],
-    notes: "Avoid harsh soaps. Apply fragrance-free ceramides moisturizer twice daily.",
-  },
-];
 
 export function PrescriptionsPage() {
-  const [selectedRx, setSelectedRx] = useState<MockPrescription | null>(null);
+  const { user } = useAuthStore();
+  const isDoctor = user?.role === "DOCTOR";
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<PrescriptionDetail | null>(null);
+
+  // Fetch prescriptions list from API
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ["prescriptions-list", isDoctor ? "doctor" : "patient"],
+    queryFn: () =>
+      isDoctor
+        ? prescriptionsApi.getDoctorPrescriptions()
+        : prescriptionsApi.getMyPrescriptions(),
+  });
+
+  const prescriptions = data?.results || [];
+
+  // Filter prescriptions based on search query
+  const filteredPrescriptions = prescriptions.filter((p) => {
+    const q = searchQuery.toLowerCase();
+    const docName = p.doctor?.name?.toLowerCase() || "";
+    const patName = p.patient?.full_name?.toLowerCase() || "";
+    const diag = p.diagnosis?.toLowerCase() || "";
+    const vCode = p.verification_code?.toLowerCase() || "";
+    const bCode = p.booking_code?.toLowerCase() || "";
+    return (
+      docName.includes(q) ||
+      patName.includes(q) ||
+      diag.includes(q) ||
+      vCode.includes(q) ||
+      bCode.includes(q)
+    );
+  });
 
   return (
     <AppLayout showSidebar={true}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold font-heading text-slate-900">
-              Digital Prescriptions
-            </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Tamper-proof medical prescriptions issued by your certified attending doctors.
-            </p>
+      <div className="space-y-6 max-w-7xl mx-auto font-sans pb-12">
+        {/* ─── Breadcrumbs & Header ─── */}
+        <div>
+          <Breadcrumbs
+            items={[
+              { label: "Dashboard", to: "/dashboard" },
+              { label: "Digital e-Prescriptions" },
+            ]}
+          />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+            <div>
+              <h1 className="text-2xl font-bold font-heading text-ink flex items-center gap-2">
+                <FileText size={24} className="text-teal-700" />
+                {isDoctor ? "Issued Digital Prescriptions" : "My e-Prescriptions"}
+              </h1>
+              <p className="text-xs sm:text-sm text-muted mt-0.5">
+                {isDoctor
+                  ? "Manage and track tamper-evident digital prescriptions issued to your patients"
+                  : "Access and download verified digital prescriptions issued by your doctors"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                icon={RefreshCw}
+                loading={isRefetching}
+                onClick={() => refetch()}
+                className="text-xs"
+              >
+                Refresh
+              </Button>
+              <Link to="/verify">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={ShieldCheck}
+                  className="text-xs font-bold"
+                >
+                  Verify Prescription
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
-        {/* Prescription List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {mockPrescriptions.map((rx) => (
-            <div
-              key={rx.id}
-              className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs hover:border-teal-300 hover:shadow-md transition-all flex flex-col justify-between"
-            >
-              <div>
-                {/* Header */}
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
-                      Rx #{rx.id}
-                    </span>
-                    <h3 className="text-base font-bold font-heading text-slate-900 mt-1">
-                      {rx.diagnosis}
-                    </h3>
-                  </div>
-                  <Badge variant="success" size="sm">
-                    Verified
-                  </Badge>
-                </div>
+        {/* ─── Search & Filters Bar ─── */}
+        <div className="bg-white p-4 rounded-2xl border border-border flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
+          <div className="relative w-full sm:w-96">
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by diagnosis, doctor, patient, code..."
+              className="w-full bg-slate-50 border border-border text-ink text-xs pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700"
+            />
+          </div>
 
-                {/* Doctor info */}
-                <div className="text-xs text-slate-600 space-y-1 mb-4">
-                  <p className="font-semibold text-slate-800 flex items-center gap-1.5">
-                    <Stethoscope size={14} className="text-teal-700" />
-                    {rx.doctorName} ({rx.specialty})
-                  </p>
-                  <p className="text-slate-400 text-[11px]">
-                    Reg No: {rx.registrationNumber} • {rx.qualification}
-                  </p>
-                  <p className="flex items-center gap-1.5 text-slate-500 pt-1">
-                    <Calendar size={13} className="text-teal-700" />
-                    Issued on: {rx.date}
-                  </p>
-                </div>
-
-                {/* Medicines summary preview */}
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 mb-4 text-xs">
-                  <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
-                    Prescribed Medicines ({rx.medicines.length})
-                  </span>
-                  <ul className="space-y-1">
-                    {rx.medicines.map((m, i) => (
-                      <li key={i} className="font-medium text-slate-700 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-teal-600" />
-                        <span>{m.name}</span>
-                        <span className="text-slate-400 text-[11px]">({m.duration})</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* View Action Footer */}
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-[11px] text-teal-800 font-medium flex items-center gap-1">
-                  <ShieldCheck size={14} /> Certified Digital Rx
-                </span>
-
-                <Button
-                  variant="primary"
-                  size="sm"
-                  icon={FileText}
-                  onClick={() => setSelectedRx(rx)}
-                >
-                  View Prescription
-                </Button>
-              </div>
-            </div>
-          ))}
+          <div className="text-xs text-muted font-medium shrink-0">
+            Showing <strong>{filteredPrescriptions.length}</strong> prescriptions
+          </div>
         </div>
 
-        {/* ─── Digital Prescription Detail Modal ─── */}
-        {selectedRx && (
-          <Modal
-            open={!!selectedRx}
-            onClose={() => setSelectedRx(null)}
-            title={`Prescription Record #${selectedRx.id}`}
-          >
-            <div className="space-y-5 print:p-0">
-              {/* Rx Header Letterhead */}
-              <div className="p-4 rounded-2xl bg-teal-900 text-white flex items-start justify-between">
-                <div>
-                  <h3 className="text-lg font-bold font-heading">{selectedRx.doctorName}</h3>
-                  <p className="text-xs text-teal-200">{selectedRx.qualification}</p>
-                  <p className="text-[11px] text-teal-300/80">Reg: {selectedRx.registrationNumber}</p>
+        {/* ─── Prescriptions Cards Grid ─── */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-44 rounded-2xl" variant="rect" />
+            ))}
+          </div>
+        ) : filteredPrescriptions.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredPrescriptions.map((p) => {
+              const medCount = p.medicines?.length || 0;
+
+              return (
+                <div
+                  key={p.id}
+                  className="bg-white rounded-2xl border border-border p-5 shadow-xs hover:shadow-md transition-all space-y-4 flex flex-col justify-between"
+                >
+                  <div className="space-y-3">
+                    {/* Top Row: Date & Code Badge */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-muted flex items-center gap-1.5">
+                        <Calendar size={13} className="text-teal-700" />
+                        {formatIndianDate(p.created_at)}
+                      </span>
+                      <span className="text-[11px] font-mono font-bold bg-teal-50 text-teal-800 border border-teal-200 px-2 py-0.5 rounded-md">
+                        {p.verification_code}
+                      </span>
+                    </div>
+
+                    {/* Doctor / Patient Info */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 border border-teal-100 flex items-center justify-center font-bold text-sm shrink-0">
+                        {isDoctor
+                          ? p.patient?.full_name?.charAt(0) || "P"
+                          : p.doctor?.name?.charAt(0) || "D"}
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-bold text-ink truncate">
+                          {isDoctor
+                            ? p.patient?.full_name
+                            : `Dr. ${p.doctor?.name}`}
+                        </h3>
+                        <p className="text-xs text-muted truncate">
+                          {isDoctor
+                            ? `Phone: ${p.patient?.phone || "N/A"}`
+                            : `${p.doctor?.specialty?.name || "Specialist"} • ${p.doctor?.city || "New Delhi"}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Diagnosis Box */}
+                    <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-xs space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
+                        Diagnosis
+                      </span>
+                      <p className="font-semibold text-slate-900 line-clamp-1">
+                        {p.diagnosis}
+                      </p>
+                    </div>
+
+                    {/* Medicines snippet */}
+                    <div className="flex items-center justify-between text-xs text-muted">
+                      <span className="flex items-center gap-1 font-medium text-teal-900">
+                        <Stethoscope size={13} className="text-teal-700" />
+                        {medCount} {medCount === 1 ? "Medicine" : "Medicines"} Prescribed
+                      </span>
+                      {p.follow_up_in_days && (
+                        <span className="text-[11px] text-slate-500">
+                          Follow-up: {p.follow_up_in_days}d
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Actions Row */}
+                  <div className="pt-3 border-t border-border flex items-center justify-between gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      icon={FileText}
+                      onClick={() => setSelectedPrescription(p)}
+                      className="text-xs"
+                    >
+                      View Details
+                    </Button>
+
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/verify/${p.verification_code}`}
+                        target="_blank"
+                        className="text-xs font-bold text-teal-700 hover:text-teal-900 flex items-center gap-1"
+                        title="Verify Authenticity"
+                      >
+                        <ShieldCheck size={14} />
+                        Verify
+                      </Link>
+
+                      {p.pdf_url && (
+                        <a
+                          href={p.pdf_url}
+                          download={`Prescription_${p.verification_code}.pdf`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            icon={Download}
+                            className="text-xs"
+                          >
+                            PDF
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <Badge variant="warning" size="sm">SehatSetu Telehealth</Badge>
-                  <p className="text-[11px] text-teal-200 mt-1">{selectedRx.date}</p>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={FileText}
+            title={
+              searchQuery
+                ? "No matching prescriptions found"
+                : "No digital prescriptions yet"
+            }
+            description={
+              searchQuery
+                ? "Try searching with a different diagnosis or code."
+                : isDoctor
+                ? "Prescriptions you generate during consultations will be archived here."
+                : "Prescriptions issued by your doctors will appear here with instant PDF downloads."
+            }
+            action={
+              <Link to="/appointments">
+                <Button variant="primary" size="sm" icon={Calendar}>
+                  View Consultations
+                </Button>
+              </Link>
+            }
+          />
+        )}
+
+        {/* ─── Detail Modal with PDF Viewer & Full Breakdown ─── */}
+        <Modal
+          open={!!selectedPrescription}
+          onClose={() => setSelectedPrescription(null)}
+          title={`Digital Prescription — ${selectedPrescription?.verification_code || ""}`}
+          size="lg"
+        >
+          {selectedPrescription && (
+            <div className="space-y-5 text-ink">
+              {/* Doctor / Patient Header */}
+              <div className="bg-teal-50/70 border border-teal-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div>
+                  <h3 className="font-bold text-sm text-teal-950">
+                    Dr. {selectedPrescription.doctor.name}
+                  </h3>
+                  <p className="text-teal-700">
+                    {selectedPrescription.doctor.specialty?.name || "Specialist"} • Reg:{" "}
+                    {selectedPrescription.doctor.registration_number || "REG-MCI-2026"}
+                  </p>
+                  <p className="text-[11px] text-muted mt-0.5">
+                    Patient: <strong>{selectedPrescription.patient.full_name}</strong> • Ref:{" "}
+                    <strong>{selectedPrescription.booking_code}</strong>
+                  </p>
+                </div>
+
+                <div className="text-left sm:text-right font-medium text-teal-900 space-y-1">
+                  <div>
+                    Issued: <strong>{formatIndianDate(selectedPrescription.created_at)}</strong>
+                  </div>
+                  <div className="text-[11px] text-emerald-700 font-bold flex items-center sm:justify-end gap-1">
+                    <ShieldCheck size={14} /> Verified e-Prescription
+                  </div>
                 </div>
               </div>
 
-              {/* Patient and Diagnosis */}
-              <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Patient Name</span>
-                  <span className="font-bold text-slate-800">{selectedRx.patientName}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Clinical Diagnosis</span>
-                  <span className="font-bold text-teal-900">{selectedRx.diagnosis}</span>
-                </div>
+              {/* Diagnosis Box */}
+              <div className="space-y-1 bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
+                  Diagnosis
+                </span>
+                <p className="font-bold text-slate-900 text-sm">
+                  {selectedPrescription.diagnosis}
+                </p>
               </div>
 
-              {/* Medicines Table */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                  Prescription Details (Rx)
+              {/* Prescribed Medications Table */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                  Prescribed Medications (Rx)
                 </h4>
-                <div className="border border-slate-200 rounded-xl overflow-hidden">
+                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                    <thead className="bg-teal-800 text-white font-bold">
                       <tr>
-                        <th className="p-2.5">Medicine</th>
-                        <th className="p-2.5">Dosage / Frequency</th>
+                        <th className="p-2.5">#</th>
+                        <th className="p-2.5">Medicine Name</th>
+                        <th className="p-2.5">Dosage</th>
+                        <th className="p-2.5">Frequency</th>
                         <th className="p-2.5">Duration</th>
                         <th className="p-2.5">Instructions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {selectedRx.medicines.map((m, idx) => (
-                        <tr key={idx} className="hover:bg-slate-50">
+                      {selectedPrescription.medicines?.map((m, idx) => (
+                        <tr
+                          key={idx}
+                          className={idx % 2 === 1 ? "bg-slate-50" : "bg-white"}
+                        >
+                          <td className="p-2.5 font-bold text-slate-400">{idx + 1}</td>
                           <td className="p-2.5 font-bold text-slate-900">{m.name}</td>
-                          <td className="p-2.5 text-slate-600">{m.dosage} ({m.frequency})</td>
-                          <td className="p-2.5 text-slate-600">{m.duration}</td>
-                          <td className="p-2.5 text-slate-600">{m.instructions}</td>
+                          <td className="p-2.5 text-slate-700">{m.dosage}</td>
+                          <td className="p-2.5 text-slate-700">{m.frequency}</td>
+                          <td className="p-2.5 text-slate-700">{m.duration}</td>
+                          <td className="p-2.5 text-slate-600 text-[11px]">{m.instructions || "-"}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -251,30 +361,62 @@ export function PrescriptionsPage() {
                 </div>
               </div>
 
-              {/* Doctor Advice / Notes */}
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
-                <span className="font-bold text-amber-900 block mb-1">Doctor's Advice & Lifestyle Notes:</span>
-                <p className="text-amber-800 leading-relaxed">{selectedRx.notes}</p>
-              </div>
-
-              {/* Verified Digital Signature */}
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-                <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                  <CheckCircle2 size={16} />
-                  <span>Electronically Signed & Verified by Medical Council</span>
+              {/* Advice */}
+              {selectedPrescription.advice && (
+                <div className="space-y-1 bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted block">
+                    Physician's Advice & Lifestyle Guidance
+                  </span>
+                  <p className="text-slate-800 leading-relaxed">
+                    {selectedPrescription.advice}
+                  </p>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  icon={Printer}
-                  onClick={() => window.print()}
+              )}
+
+              {/* Follow up */}
+              {selectedPrescription.follow_up_in_days && (
+                <div className="text-xs text-slate-700 font-medium">
+                  Recommended follow-up in{" "}
+                  <strong>{selectedPrescription.follow_up_in_days} days</strong> or SOS in case of acute distress.
+                </div>
+              )}
+
+              {/* Footer Actions */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
+                <Link
+                  to={`/verify/${selectedPrescription.verification_code}`}
+                  target="_blank"
+                  className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1.5"
                 >
-                  Print Rx
-                </Button>
+                  <ShieldCheck size={14} />
+                  Public Verification Link <ExternalLink size={12} />
+                </Link>
+
+                <div className="flex items-center gap-2">
+                  {selectedPrescription.pdf_url && (
+                    <a
+                      href={selectedPrescription.pdf_url}
+                      download={`Prescription_${selectedPrescription.verification_code}.pdf`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Button variant="primary" size="sm" icon={Download}>
+                        Download PDF
+                      </Button>
+                    </a>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedPrescription(null)}
+                  >
+                    Close
+                  </Button>
+                </div>
               </div>
             </div>
-          </Modal>
-        )}
+          )}
+        </Modal>
       </div>
     </AppLayout>
   );

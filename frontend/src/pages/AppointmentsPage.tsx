@@ -238,16 +238,19 @@ export function AppointmentsPage() {
 
                   {/* Right Actions */}
                   <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0">
-                    <Link to="/consultations">
-                      <Button
-                        variant="primary"
-                        size="sm"
-                        icon={Video}
-                        className="bg-teal-800 hover:bg-teal-900"
-                      >
-                        Enter Room
-                      </Button>
-                    </Link>
+                    {apt.status !== "CANCELLED_BY_PATIENT" &&
+                      apt.status !== "CANCELLED_BY_DOCTOR" && (
+                        <Link to={`/consult/${apt.id}`}>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            icon={Video}
+                            className="bg-teal-800 hover:bg-teal-900 shadow-xs"
+                          >
+                            Enter Room
+                          </Button>
+                        </Link>
+                      )}
 
                     {canCancel && (
                       <Button

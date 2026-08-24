@@ -105,6 +105,8 @@ INSTALLED_APPS = [
     "apps.consultations",
     "apps.prescriptions",
     "apps.notifications",
+    "apps.dashboard",
+    "apps.admin_api",
 ]
 
 MIDDLEWARE = [
@@ -229,17 +231,36 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Channels Channel Layers
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-        if DEBUG and not os.environ.get("REDIS_URL")
-        else "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],
+def _get_channel_layer_config():
+    import socket
+    from urllib.parse import urlparse
+
+    redis_host = "127.0.0.1"
+    redis_port = 6379
+    if REDIS_URL:
+        try:
+            parsed = urlparse(REDIS_URL)
+            redis_host = parsed.hostname or "127.0.0.1"
+            redis_port = parsed.port or 6379
+        except Exception:
+            pass
+
+    try:
+        s = socket.create_connection((redis_host, redis_port), timeout=0.3)
+        s.close()
+        return {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_URL],
+            },
         }
-        if not (DEBUG and not os.environ.get("REDIS_URL"))
-        else {},
-    },
+    except Exception:
+        return {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+
+CHANNEL_LAYERS = {
+    "default": _get_channel_layer_config(),
 }
 
 # Celery Configuration
@@ -249,3 +270,38 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+CELERY_BEAT_SCHEDULE = {
+    "reminder_15min": {
+        "task": "apps.notifications.tasks.send_appointment_reminders_15min",
+        "schedule": 300.0,  # Run every 5 minutes
+    },
+    "reminder_3h": {
+        "task": "apps.notifications.tasks.send_appointment_reminders_3h",
+        "schedule": 900.0,  # Run every 15 minutes
+    },
+    "mark_missed_hourly": {
+        "task": "apps.notifications.tasks.mark_missed_appointments",
+        "schedule": 3600.0,  # Run every hour
+    },
+    "nightly_stats": {
+        "task": "apps.notifications.tasks.nightly_platform_stats",
+        "schedule": 86400.0,  # Run once daily
+    },
+    "nightly_stats_snapshot": {
+        "task": "apps.admin_api.tasks.compute_daily_snapshot",
+        "schedule": 86400.0,  # Run once daily
+    },
+}
+
+# Email Configuration (Console Backend in dev for zero friction)
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = os.environ.get(
+        "EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend"
+    )
+
+DEFAULT_FROM_EMAIL = os.environ.get(
+    "DEFAULT_FROM_EMAIL", "SehatSetu Care <notifications@sehatsetu.com>"
+)

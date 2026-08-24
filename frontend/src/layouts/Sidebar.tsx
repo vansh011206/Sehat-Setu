@@ -3,11 +3,11 @@ import {
   LayoutDashboard,
   Search,
   CalendarDays,
-  Clock,
   CalendarClock,
   Users,
   FileText,
   ShieldCheck,
+  Bell,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -28,7 +28,8 @@ const patientNav: NavItem[] = [
   { label: "Dashboard", to: "/dashboard", icon: LayoutDashboard },
   { label: "Find Doctors", to: "/doctors", icon: Search },
   { label: "Appointments", to: "/appointments", icon: CalendarDays },
-  { label: "History", to: "/history", icon: Clock },
+  { label: "Prescriptions", to: "/prescriptions", icon: FileText },
+  { label: "Notifications", to: "/notifications", icon: Bell },
 ];
 
 const doctorNav: NavItem[] = [
@@ -36,11 +37,13 @@ const doctorNav: NavItem[] = [
   { label: "Schedule", to: "/schedule", icon: CalendarClock },
   { label: "Patients", to: "/patients", icon: Users },
   { label: "Prescriptions", to: "/prescriptions", icon: FileText },
+  { label: "Notifications", to: "/notifications", icon: Bell },
 ];
 
 const adminNav: NavItem[] = [
   { label: "Dashboard", to: "/admin", icon: LayoutDashboard },
   { label: "Users", to: "/admin/users", icon: Users },
+  { label: "Notifications", to: "/notifications", icon: Bell },
   { label: "Analytics", to: "/admin/analytics", icon: ShieldCheck },
 ];
 

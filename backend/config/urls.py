@@ -16,6 +16,11 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.utils import timezone
 from apps.doctors.views import SpecialtyListView
+from apps.prescriptions.views import (
+    DoctorPrescriptionsListView,
+    PatientPrescriptionsListView,
+    VerifyPrescriptionView,
+)
 
 
 @api_view(["GET"])
@@ -59,6 +64,19 @@ urlpatterns = [
         "api/v1/notifications/",
         include("apps.notifications.urls", namespace="notifications"),
     ),
+    path(
+        "api/v1/dashboard/",
+        include("apps.dashboard.urls", namespace="dashboard"),
+    ),
+    # Admin API & Analytics Console
+    path(
+        "api/v1/admin/",
+        include("apps.admin_api.urls", namespace="admin_api"),
+    ),
+    # Top-Level e-Prescription & Verification Endpoints
+    path("api/v1/verify/<str:code>/", VerifyPrescriptionView.as_view(), name="prescription-verify"),
+    path("api/v1/my/prescriptions/", PatientPrescriptionsListView.as_view(), name="my-prescriptions-list"),
+    path("api/v1/doctors/me/prescriptions/", DoctorPrescriptionsListView.as_view(), name="doctor-my-prescriptions-list"),
     # API Schema & Documentation
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(

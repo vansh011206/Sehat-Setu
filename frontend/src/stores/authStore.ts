@@ -15,6 +15,16 @@ export interface AuthUser {
   gender: string;
   date_of_birth: string | null;
   date_joined: string;
+  doctor_profile?: {
+    id: number;
+    specialty?: any;
+    qualification?: string;
+    city?: string;
+    fee?: string | number;
+    avg_rating?: string | number;
+    rating_count?: number;
+    is_available?: boolean;
+  } | null;
 }
 
 interface AuthState {

@@ -7,4 +7,5 @@ export { Modal } from "./Modal";
 export { Skeleton, SkeletonCard } from "./Skeleton";
 export { EmptyState } from "./EmptyState";
 export { Avatar } from "./Avatar";
+export { Breadcrumbs } from "./Breadcrumbs";
 export { ToastProvider, useToast } from "./Toast";

@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { Activity, Bell, ChevronDown, LogOut, Menu, User } from "lucide-react";
+import { Activity, ChevronDown, LogOut, Menu, User } from "lucide-react";
 import { useAuthStore } from "../stores/authStore";
 import { Avatar } from "../components/ui/Avatar";
 import { useState, useRef, useEffect } from "react";
+import { NotificationBell } from "../features/notifications/components/NotificationBell";
 
 interface NavbarProps {
   onMenuToggle: () => void;
@@ -55,11 +56,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <div className="flex items-center gap-2">
           {isAuthenticated && user ? (
             <>
-              {/* Notification bell */}
-              <button className="relative p-2 rounded-lg text-muted hover:text-ink hover:bg-surface transition-colors cursor-pointer">
-                <Bell size={20} />
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
-              </button>
+              {/* Real-time Notification Bell */}
+              <NotificationBell />
 
               {/* Avatar dropdown */}
               <div ref={dropdownRef} className="relative">

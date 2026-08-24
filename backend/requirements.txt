@@ -7,6 +7,13 @@ django-environ==0.12.0
 psycopg[binary]==3.2.4
 celery==5.4.0
 redis==5.2.1
-channels==4.2.0
+channels==4.3.2
+channels-redis==4.3.0
 daphne==4.1.2
 Pillow==11.1.0
+reportlab==5.0.0
+argon2-cffi==23.1.0
+pytest==8.3.4
+pytest-django==4.10.0
+pytest-cov==6.0.0
+factory-boy==3.3.3
