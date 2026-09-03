@@ -1,0 +1,55 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ── Virtual Environment ──
+venv/
+.venv/
+env/
+
+# ── Django ──
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+backend/htmlcov/
+backend/.coverage
+*.log
+
+# ── Node / Frontend ──
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.production.local
+
+# ── Environment & Secrets ──
+.env
+backend/.env
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Docker (optional) ──
+# Dockerfile.backend
+# Dockerfile.frontend
+# docker-compose*.yml
+
+# ── Misc ──
+*.pyc
+.pytest_cache/

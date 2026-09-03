@@ -69,11 +69,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         write_only=True, required=True, style={"input_type": "password"}
     )
     confirm_password = serializers.CharField(
-        write_only=True, required=True, style={"input_type": "password"}
+        write_only=True, required=False, style={"input_type": "password"}
     )
 
     # Optional fields for Doctor profile setup during registration
     specialty_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    specialty_name = serializers.CharField(required=False, write_only=True, allow_blank=True)
     qualification = serializers.CharField(required=False, write_only=True, allow_blank=True)
     years_of_experience = serializers.IntegerField(required=False, write_only=True, default=0)
     registration_number = serializers.CharField(required=False, write_only=True, allow_blank=True)
@@ -97,6 +98,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             "gender",
             "date_of_birth",
             "specialty_id",
+            "specialty_name",
             "qualification",
             "years_of_experience",
             "registration_number",
@@ -126,7 +128,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if attrs["password"] != attrs["confirm_password"]:
+        confirm_password = attrs.get("confirm_password")
+        if confirm_password and attrs["password"] != confirm_password:
             raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
 
         # Validate password strength using Django's validators
@@ -141,6 +144,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Extract doctor profile data if provided
         specialty_id = validated_data.pop("specialty_id", None)
+        specialty_name = validated_data.pop("specialty_name", "").strip()
         qualification = validated_data.pop("qualification", "")
         years_of_experience = validated_data.pop("years_of_experience", 0)
         registration_number = validated_data.pop("registration_number", "")
@@ -150,7 +154,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         clinic_name = validated_data.pop("clinic_name", "")
         clinic_address = validated_data.pop("clinic_address", "")
 
-        validated_data.pop("confirm_password")
+        validated_data.pop("confirm_password", None)
         password = validated_data.pop("password")
 
         user = User.objects.create_user(password=password, **validated_data)
@@ -161,10 +165,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
             specialty = None
             if specialty_id:
-                try:
-                    specialty = Specialty.objects.get(id=specialty_id)
-                except Specialty.DoesNotExist:
-                    pass
+                specialty = Specialty.objects.filter(id=specialty_id).first()
+            elif specialty_name:
+                specialty, _ = Specialty.objects.get_or_create(
+                    name=specialty_name,
+                    defaults={"icon_name": "stethoscope"}
+                )
 
             DoctorProfile.objects.create(
                 user=user,

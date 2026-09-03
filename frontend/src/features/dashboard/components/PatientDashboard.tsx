@@ -194,7 +194,7 @@ export function PatientDashboard() {
             size="sm"
             icon={RefreshCw}
             onClick={() => refetch()}
-            className={isFetching ? "animate-spin" : ""}
+            loading={isFetching}
             title="Refresh dashboard data"
           >
             Refresh

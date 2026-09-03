@@ -27,6 +27,7 @@ class RegisterView(generics.CreateAPIView):
     """
 
     permission_classes = [AllowAny]
+    throttle_scope = "auth"
     serializer_class = RegisterSerializer
 
     @extend_schema(responses={201: UserSerializer})
@@ -34,6 +35,7 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        user_data = UserSerializer(user, context={"request": request}).data
 
         # Generate tokens for the new user
         refresh = RefreshToken.for_user(user)
@@ -63,7 +65,7 @@ class LoginView(APIView):
     """
 
     permission_classes = [AllowAny]
-    throttle_scope = "login"
+    throttle_scope = "auth"
 
     @extend_schema(request=LoginSerializer, responses={200: UserSerializer})
     def post(self, request):

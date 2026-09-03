@@ -1,0 +1,129 @@
+name: SehatSetu CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-test:
+    name: Backend Linting, Pytest & Coverage (>80%)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: test_sehatsetu_db
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Run Pytest Test Suite with Coverage
+        env:
+          SECRET_KEY: ci-secret-key-sehatsetu-testing
+          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_sehatsetu_db
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          cd backend
+          pytest --cov=apps.accounts --cov=apps.doctors --cov=apps.appointments --cov=apps.consultations --cov=apps.prescriptions --cov=apps.notifications --cov=apps.admin_api --cov-report=term-missing --cov-fail-under=80
+
+  frontend-test:
+    name: Frontend Typecheck & Vitest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Node Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run TypeScript Type Check (tsc -b)
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Run Vitest Unit Tests
+        run: |
+          cd frontend
+          npm test
+
+  deploy:
+    name: Production Build & SSH Deploy (Placeholder)
+    needs: [backend-test, frontend-test]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.backend
+          push: false  # Change to true when configuring remote server
+          tags: ghcr.io/${{ github.repository }}/backend:latest
+
+      - name: Build & Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.frontend
+          push: false  # Change to true when configuring remote server
+          tags: ghcr.io/${{ github.repository }}/frontend:latest
+
+      - name: SSH Remote Deployment Step
+        run: |
+          echo "CI pipeline successfully built container images!"
+          echo "Documented placeholder: ssh -i ~/.ssh/id_rsa user@your-server-ip 'cd /opt/sehatsetu && docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d'"

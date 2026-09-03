@@ -3,7 +3,9 @@ Views for Appointment booking, Availability generation, and lifecycle management
 """
 
 from datetime import datetime, time, timedelta
-from django.db import IntegrityError, OperationalError, transaction
+from django.db import IntegrityError, OperationalError, models, transaction
+from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, status
@@ -43,7 +45,19 @@ class DoctorAvailabilityView(APIView):
 
     @extend_schema(responses={200: DayAvailabilitySerializer(many=True)})
     def get(self, request, pk):
-        doctor = get_object_or_404(DoctorProfile, pk=pk)
+        doctor = DoctorProfile.objects.filter(
+            models.Q(pk=pk) | models.Q(user_id=pk)
+        ).first()
+        if not doctor:
+            raise Http404("No DoctorProfile matches the given query.")
+
+        # If rules requested, return the recurring weekly rules directly
+        if request.query_params.get("rules") == "true" or request.query_params.get("type") == "rules":
+            rules = doctor.availability_rules.all().order_by("weekday")
+            return Response(
+                AvailabilityRuleSerializer(rules, many=True).data,
+                status=status.HTTP_200_OK,
+            )
 
         # 1. Fetch active rules
         rules_by_weekday = {
@@ -70,7 +84,7 @@ class DoctorAvailabilityView(APIView):
 
         now = timezone.now()
         today = timezone.localdate(now)
-        days_count = 14
+        days_count = 7
 
         window_start = timezone.make_aware(datetime.combine(today, time(0, 0)))
         window_end = timezone.make_aware(
@@ -145,7 +159,11 @@ class DoctorAvailabilityView(APIView):
         responses={200: AvailabilityRuleSerializer(many=True)},
     )
     def post(self, request, pk):
-        doctor = get_object_or_404(DoctorProfile, pk=pk)
+        doctor = DoctorProfile.objects.filter(
+            models.Q(pk=pk) | models.Q(user_id=pk)
+        ).first()
+        if not doctor:
+            raise Http404("No DoctorProfile matches the given query.")
 
         # Permission check: must be the doctor or admin
         if request.user.role != User.Role.ADMIN:

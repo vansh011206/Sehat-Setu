@@ -130,6 +130,13 @@ export const doctorsApi = {
     return res.data;
   },
 
+  getAvailabilityRules: async (id: number): Promise<AvailabilityRule[]> => {
+    const res = await apiClient.get<AvailabilityRule[]>(`/doctors/${id}/availability/`, {
+      params: { rules: "true" },
+    });
+    return res.data;
+  },
+
   updateAvailability: async (
     id: number,
     rules: AvailabilityRule[]

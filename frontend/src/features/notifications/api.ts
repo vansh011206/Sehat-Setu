@@ -2,6 +2,7 @@ import { apiClient } from "../../api/client";
 
 export interface NotificationItem {
   id: number;
+  recipient_id?: number;
   type:
     | "APPOINTMENT_CONFIRMED"
     | "APPOINTMENT_CANCELLED"

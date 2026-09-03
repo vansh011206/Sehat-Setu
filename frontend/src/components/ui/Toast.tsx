@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -49,10 +50,10 @@ const variantClasses: Record<"success" | "error" | "info" | "warning", string> =
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const recentToastsRef = useRef<Map<string, number>>(new Map());
 
   const addToast = useCallback(
     (messageOrOptions: string | ToastOptions, variant: ToastVariant = "success") => {
-      const id = ++toastId;
       let msg = "";
       let title: string | undefined;
       let rawV: ToastVariant = variant;
@@ -65,10 +66,25 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         rawV = messageOrOptions.type || messageOrOptions.variant || variant;
       }
 
+      // Deduplication: prevent identical notifications flooding the screen
+      const key = `${title || ""}:${msg}`;
+      const now = Date.now();
+      const lastSeen = recentToastsRef.current.get(key) || 0;
+      if (now - lastSeen < 3500) {
+        return;
+      }
+      recentToastsRef.current.set(key, now);
+
+      const id = ++toastId;
       const v: "success" | "error" | "info" | "warning" =
         rawV === "danger" ? "error" : rawV;
 
-      setToasts((prev) => [...prev, { id, message: msg, title, variant: v }]);
+      setToasts((prev) => {
+        // Cap visible stacked toasts to maximum 3
+        const trimmed = prev.length >= 3 ? prev.slice(prev.length - 2) : prev;
+        return [...trimmed, { id, message: msg, title, variant: v }];
+      });
+
       setTimeout(() => {
         setToasts((prev) => prev.filter((t) => t.id !== id));
       }, 4000);

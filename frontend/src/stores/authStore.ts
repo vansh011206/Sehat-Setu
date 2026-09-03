@@ -79,6 +79,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
         refreshToken: null,
         isAuthenticated: false,
       });
+      try {
+        window.dispatchEvent(new Event("sehatsetu:logout"));
+      } catch {}
     },
 
     updateUser: (updates) => {

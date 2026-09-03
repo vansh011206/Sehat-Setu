@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   UserPlus,
   Stethoscope,
@@ -17,10 +17,12 @@ import {
   Building2,
   FileText,
   Briefcase,
+  Sparkles,
 } from "lucide-react";
 import { Button, Input, Card } from "../../components/ui";
 import { useToast } from "../../components/ui/Toast";
 import { authApi, type RegisterPayload } from "./api";
+import { doctorsApi } from "../doctors/api";
 import { useAuthStore } from "../../stores/authStore";
 
 type Role = "PATIENT" | "DOCTOR";
@@ -44,14 +46,23 @@ export function RegisterPage() {
     password: "",
     confirm_password: "",
     // Doctor fields
+    specialty_id: "",
+    specialty_name: "",
     qualification: "",
     years_of_experience: "",
     registration_number: "",
     bio: "",
     city: "",
-    consultation_fee: "",
+    consultation_fee: "500",
     clinic_name: "",
     clinic_address: "",
+  });
+
+  // Fetch available specialties from backend
+  const { data: specialties } = useQuery({
+    queryKey: ["specialties"],
+    queryFn: doctorsApi.getSpecialties,
+    staleTime: 60000,
   });
 
   const updateField = (field: string, value: string) => {
@@ -103,13 +114,17 @@ export function RegisterPage() {
       }
     },
     onError: (error: unknown) => {
-      const err = error as { response?: { data?: Record<string, string[]> } };
+      const err = error as { response?: { data?: Record<string, any> } };
       if (err.response?.data) {
         const apiErrors: FormErrors = {};
+        let firstMsg = "";
         Object.entries(err.response.data).forEach(([key, value]) => {
-          apiErrors[key] = Array.isArray(value) ? value[0] : String(value);
+          const msg = Array.isArray(value) ? value[0] : String(value);
+          apiErrors[key] = msg;
+          if (!firstMsg) firstMsg = `${key.replace(/_/g, " ")}: ${msg}`;
         });
         setErrors(apiErrors);
+        toast(firstMsg || "Registration failed. Please check form errors.", "error");
       } else {
         toast("Registration failed. Please try again.", "error");
       }
@@ -126,6 +141,7 @@ export function RegisterPage() {
           phone: form.phone,
           email: form.email || undefined,
           password: form.password,
+          confirm_password: form.confirm_password,
           role,
         });
       }
@@ -138,7 +154,18 @@ export function RegisterPage() {
       phone: form.phone,
       email: form.email || undefined,
       password: form.password,
+      confirm_password: form.confirm_password,
       role,
+      specialty_id: form.specialty_id ? Number(form.specialty_id) : undefined,
+      specialty_name: form.specialty_name || undefined,
+      qualification: form.qualification || undefined,
+      years_of_experience: form.years_of_experience ? Number(form.years_of_experience) : 0,
+      registration_number: form.registration_number || undefined,
+      bio: form.bio || undefined,
+      city: form.city || undefined,
+      consultation_fee: form.consultation_fee ? Number(form.consultation_fee) : 500,
+      clinic_name: form.clinic_name || undefined,
+      clinic_address: form.clinic_address || undefined,
     });
   };
 
@@ -306,6 +333,76 @@ export function RegisterPage() {
         ) : (
           /* Step 2 — Doctor Details */
           <div className="space-y-4">
+            {/* Category / Specialty Dropdown with suggestions */}
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5 flex items-center justify-between">
+                <span>Medical Specialty / Category</span>
+                <span className="text-[11px] text-teal-800 font-semibold">e.g. Cardiologist, Sexologist</span>
+              </label>
+
+              <div className="relative">
+                <select
+                  value={form.specialty_id || form.specialty_name}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const matched = (specialties || []).find((s) => String(s.id) === val || s.name.toLowerCase() === val.toLowerCase());
+                    if (matched) {
+                      setForm((prev) => ({ ...prev, specialty_id: String(matched.id), specialty_name: matched.name }));
+                    } else {
+                      setForm((prev) => ({ ...prev, specialty_id: "", specialty_name: val }));
+                    }
+                  }}
+                  className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-border bg-white text-sm text-ink focus:outline-none focus:ring-2 focus:ring-primary-900 focus:border-transparent cursor-pointer font-medium"
+                >
+                  <option value="">Select Specialty / Category...</option>
+                  {(specialties || []).map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                  <option value="Sexologist">Sexologist / Sexual Health</option>
+                  <option value="Cardiologist">Cardiologist / Heart Specialist</option>
+                  <option value="Dermatologist">Dermatologist / Skin Specialist</option>
+                  <option value="Pediatrician">Pediatrician / Child Specialist</option>
+                  <option value="Orthopedic Surgeon">Orthopedic Surgeon / Bone & Joint</option>
+                  <option value="Gynecologist">Gynecologist & Obstetrician</option>
+                  <option value="General Physician">General Physician / Internal Medicine</option>
+                  <option value="Psychiatrist">Psychiatrist / Mental Health</option>
+                  <option value="ENT Specialist">ENT Specialist / Otolaryngologist</option>
+                  <option value="Neurologist">Neurologist / Brain & Nerve</option>
+                </select>
+              </div>
+
+              {/* Quick suggestion pills */}
+              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                <span className="text-[11px] text-muted font-medium flex items-center gap-1">
+                  <Sparkles size={11} className="text-teal-700" /> Suggestions:
+                </span>
+                {["Cardiology", "Sexologist", "Dermatology", "Pediatrics", "Gynecology"].map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => {
+                      const matched = (specialties || []).find((s) => s.name.toLowerCase() === name.toLowerCase());
+                      if (matched) {
+                        setForm((prev) => ({ ...prev, specialty_id: String(matched.id), specialty_name: matched.name }));
+                      } else {
+                        setForm((prev) => ({ ...prev, specialty_id: "", specialty_name: name }));
+                      }
+                    }}
+                    className={`text-[11px] px-2 py-0.5 rounded-full border transition-all cursor-pointer font-medium ${
+                      form.specialty_name.toLowerCase() === name.toLowerCase() ||
+                      form.specialty_id === String((specialties || []).find((s) => s.name.toLowerCase() === name.toLowerCase())?.id)
+                        ? "bg-teal-700 text-white border-teal-700 shadow-2xs"
+                        : "bg-slate-100/80 text-slate-700 border-slate-200 hover:border-teal-400"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <Input
               label="Qualification"
               placeholder="e.g., MD Cardiology, AIIMS Delhi"

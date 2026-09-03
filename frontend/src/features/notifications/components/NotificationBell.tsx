@@ -12,6 +12,7 @@ import {
   type NotificationItem,
 } from "../api";
 import { useNotificationsWebSocket } from "../useNotificationsWebSocket";
+import { useAuthStore } from "../../../stores/authStore";
 import {
   formatRelativeTime,
   getNotificationStyle,
@@ -21,6 +22,7 @@ import {
 export function NotificationBell() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -33,15 +35,17 @@ export function NotificationBell() {
 
   // Fetch notifications list
   const { data, isLoading } = useQuery({
-    queryKey: ["notifications-list"],
+    queryKey: ["notifications-list", user?.id],
     queryFn: () => notificationsApi.getNotifications({ page_size: 15 }),
+    enabled: !!user?.id,
     refetchInterval: 30000, // Background fallback poll
   });
 
   // Fetch initial unread count
   const { data: countData } = useQuery({
-    queryKey: ["notifications-unread-count"],
+    queryKey: ["notifications-unread-count", user?.id],
     queryFn: () => notificationsApi.getUnreadCount(),
+    enabled: !!user?.id,
     initialData: { unread_count: wsUnreadCount },
   });
 

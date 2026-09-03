@@ -6,11 +6,13 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
+  ExternalLink,
   FileText,
   MessageSquare,
   PhoneOff,
   Send,
   ShieldCheck,
+  Sparkles,
   Video,
   X,
 } from "lucide-react";
@@ -28,6 +30,7 @@ import {
   type StartConsultResponse,
 } from "./api";
 import { useConsultWebSocket } from "./useConsultWebSocket";
+import { JitsiMeetEmbed } from "./JitsiMeetEmbed";
 
 function format12HourTime(dateString: string | Date): string {
   const d = new Date(dateString);
@@ -255,9 +258,19 @@ export function ConsultPage() {
     (appointment
       ? `SehatSetu-appt-${appointment.id}-${appointment.booking_code.toLowerCase()}`
       : `SehatSetu-appt-${idNum}`);
-  const jitsiSrc = `https://meet.jit.si/${jitsiRoom}#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&userInfo.displayName="${encodeURIComponent(
-    displayName
-  )}"`;
+  const jitsiConfigParams = [
+    'config.prejoinPageEnabled=false',
+    'config.startWithAudioMuted=false',
+    'config.startWithVideoMuted=false',
+    'config.lobby.autoKnock=true',
+    'config.lobby.enabled=false',
+    'config.disableModeratorIndicator=true',
+    'config.enableLobbyChat=false',
+    'config.hideLobbyButton=true',
+    'config.requireDisplayName=false',
+    `userInfo.displayName="${encodeURIComponent(displayName)}"`,
+  ].join('&');
+  const jitsiSrc = `https://meet.jit.si/${jitsiRoom}#${jitsiConfigParams}`;
 
   if (apptLoading) {
     return (
@@ -379,6 +392,23 @@ export function ConsultPage() {
             </Link>
           )}
 
+          {/* Open in Dedicated Window (Bypasses any iframe camera restrictions) */}
+          <button
+            type="button"
+            onClick={() => {
+              window.open(
+                `https://meet.jit.si/${jitsiRoom}#${jitsiConfigParams}`,
+                "_blank",
+                "width=1000,height=700,menubar=no,toolbar=no,location=no,status=no"
+              );
+            }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 hover:text-white text-xs font-bold border border-slate-700 transition-colors cursor-pointer"
+            title="Launch video call in separate dedicated window (ideal if laptop camera permissions are restricted in iframe)"
+          >
+            <ExternalLink size={14} />
+            <span>Dedicated Window</span>
+          </button>
+
           {activeSessionStatus !== "ENDED" && (
             <Button
               variant="danger"
@@ -413,12 +443,9 @@ export function ConsultPage() {
         <div className="flex-1 flex flex-col p-3 sm:p-4 lg:p-6 min-h-0 overflow-y-auto">
           {activeSessionStatus === "ACTIVE" ? (
             <div className="w-full flex-1 min-h-[480px] lg:min-h-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-900 shadow-2xl relative">
-              <iframe
-                src={jitsiSrc}
-                allow="camera *; microphone *; fullscreen *; display-capture *; autoplay *; clipboard-write *"
-                allowFullScreen
-                className="w-full h-full border-0 min-h-[500px]"
-                title="SehatSetu Video Consultation Stage"
+              <JitsiMeetEmbed
+                roomName={jitsiRoom}
+                displayName={displayName}
               />
             </div>
           ) : activeSessionStatus === "WAITING" ? (
@@ -455,6 +482,16 @@ export function ConsultPage() {
                     <ShieldCheck size={13} /> Active E2EE
                   </span>
                 </div>
+              </div>
+
+              {/* Single Laptop Testing Tip Banner */}
+              <div className="bg-teal-950/60 border border-teal-800/60 p-3.5 rounded-xl text-[11px] text-teal-200 max-w-sm w-full text-left space-y-1 shadow-xs">
+                <span className="font-bold flex items-center gap-1 text-teal-300">
+                  <Sparkles size={13} /> Single Laptop Testing Tip:
+                </span>
+                <p className="text-slate-300">
+                  Doctor in Normal Chrome • Patient in Incognito (<code className="text-teal-300">Ctrl+Shift+N</code>). Mute one microphone to prevent audio echo feedback.
+                </p>
               </div>
 
               <div className="flex items-center gap-3">

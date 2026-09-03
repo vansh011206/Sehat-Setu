@@ -132,15 +132,15 @@ export function AdminOverviewPage() {
 
           <div className="flex items-center gap-2.5">
             {/* Range Toggle Chips */}
-            <div className="bg-white p-1 rounded-xl border border-border flex items-center shadow-2xs">
+            <div className="bg-slate-100 p-1 rounded-2xl border border-slate-200 flex items-center shadow-2xs">
               {(["7d", "30d", "90d"] as const).map((r) => (
                 <button
                   key={r}
                   onClick={() => setRange(r)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     range === r
-                      ? "bg-teal-700 text-white shadow-xs"
-                      : "text-slate-600 hover:text-ink hover:bg-slate-50"
+                      ? "bg-teal-800 text-white shadow-xs"
+                      : "text-slate-600 hover:text-ink hover:bg-white/60"
                   }`}
                 >
                   {r.toUpperCase()}
@@ -169,16 +169,16 @@ export function AdminOverviewPage() {
             return (
               <div
                 key={idx}
-                className="bg-white p-5 rounded-2xl border border-border shadow-xs space-y-3 relative overflow-hidden transition-all hover:shadow-md"
+                className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3 relative overflow-hidden transition-all hover:shadow-md"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                     {card.title}
                   </span>
                   <div
-                    className={`w-9 h-9 rounded-xl ${card.bgColor} ${card.textColor} border ${card.borderColor} flex items-center justify-center`}
+                    className={`w-11 h-11 rounded-2xl ${card.bgColor} ${card.textColor} border ${card.borderColor} flex items-center justify-center shadow-2xs`}
                   >
-                    <Icon size={18} />
+                    <Icon size={19} />
                   </div>
                 </div>
 
@@ -186,7 +186,7 @@ export function AdminOverviewPage() {
                   <Skeleton className="h-8 w-24" />
                 ) : (
                   <div>
-                    <div className="text-2xl font-bold font-heading text-ink tabular-nums">
+                    <div className="text-2xl font-black font-heading text-slate-900 tabular-nums">
                       {card.value}
                     </div>
 
@@ -208,7 +208,7 @@ export function AdminOverviewPage() {
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-muted mt-2 border-t border-slate-100 pt-2">
+                    <p className="text-[11px] text-slate-400 mt-2 border-t border-slate-100 pt-2 font-medium">
                       {card.subtitle}
                     </p>
                   </div>
@@ -221,7 +221,7 @@ export function AdminOverviewPage() {
         {/* ─── Main Charts Row (Revenue Trend & Status Distribution) ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue Trend (2 cols) */}
-          <div className="lg:col-span-2 bg-white p-5 sm:p-6 rounded-2xl border border-border shadow-xs space-y-4">
+          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold font-heading text-ink">
@@ -300,7 +300,7 @@ export function AdminOverviewPage() {
           </div>
 
           {/* Appointment Status Distribution Donut (1 col) */}
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-border shadow-xs space-y-4 flex flex-col justify-between">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between">
             <div>
               <h3 className="text-base font-bold font-heading text-ink">
                 Appointments by Status
@@ -379,7 +379,7 @@ export function AdminOverviewPage() {
         {/* ─── Secondary Analytics Grid (Specialty Demand & Top Doctors) ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Specialty Demand Bar Chart */}
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-border shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold font-heading text-ink">
@@ -428,7 +428,7 @@ export function AdminOverviewPage() {
           </div>
 
           {/* Top Performing Doctors Table */}
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-border shadow-xs space-y-4">
+          <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold font-heading text-ink">

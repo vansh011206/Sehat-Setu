@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Calendar,
@@ -6,6 +6,7 @@ import {
   Clock,
   RefreshCw,
   Save,
+  Sparkles,
   Stethoscope,
   User,
   Video,
@@ -35,7 +36,7 @@ export function DoctorSchedulePage() {
   const { user } = useAuthStore();
   const { addToast } = useToast();
 
-  const doctorId = user?.id || 1; // Fallback for testing/admin
+  const doctorId = user?.doctor_profile?.id || user?.id || 1;
 
   const [rules, setRules] = useState<AvailabilityRule[]>([
     { weekday: 1, start_time: "09:00", end_time: "17:00", slot_duration: 30, is_active: true },
@@ -47,10 +48,35 @@ export function DoctorSchedulePage() {
     { weekday: 7, start_time: "09:00", end_time: "13:00", slot_duration: 30, is_active: false },
   ]);
 
+  // Load existing availability rules if already saved
+  const { data: savedRulesData } = useQuery({
+    queryKey: ["doctor-rules", doctorId],
+    queryFn: () => (doctorId ? doctorsApi.getAvailabilityRules(doctorId) : Promise.resolve([])),
+    enabled: !!doctorId,
+  });
+
+  useEffect(() => {
+    if (savedRulesData && savedRulesData.length > 0) {
+      setRules((prev) =>
+        prev.map((defaultRule) => {
+          const matched = savedRulesData.find((r) => r.weekday === defaultRule.weekday);
+          if (!matched) return defaultRule;
+          return {
+            ...defaultRule,
+            start_time: typeof matched.start_time === "string" ? matched.start_time.slice(0, 5) : defaultRule.start_time,
+            end_time: typeof matched.end_time === "string" ? matched.end_time.slice(0, 5) : defaultRule.end_time,
+            slot_duration: matched.slot_duration || defaultRule.slot_duration,
+            is_active: typeof matched.is_active === "boolean" ? matched.is_active : defaultRule.is_active,
+          };
+        })
+      );
+    }
+  }, [savedRulesData]);
+
   // Fetch today's appointments for this doctor
   const todayStr = new Date().toISOString().split("T")[0];
   const { data: appointmentsData, isLoading: isLoadingAppointments, refetch: refetchAppointments } = useQuery({
-    queryKey: ["doctor-today-appointments", todayStr],
+    queryKey: ["doctor-today-appointments", doctorId, todayStr],
     queryFn: () => bookingsApi.getAppointments({ date: todayStr }),
   });
 
@@ -64,6 +90,7 @@ export function DoctorSchedulePage() {
         title: "Schedule Saved",
         message: "Your weekly consultation availability rules have been updated.",
       });
+      queryClient.invalidateQueries({ queryKey: ["doctor-rules", doctorId] });
       queryClient.invalidateQueries({ queryKey: ["doctor-availability", doctorId] });
     },
     onError: (err: any) => {
@@ -82,9 +109,9 @@ export function DoctorSchedulePage() {
       addToast({
         type: "success",
         title: "Consultation Completed",
-        message: "Appointment marked as completed. Digital prescription unlocked.",
+        message: "Appointment marked as completed.",
       });
-      refetchAppointments();
+      queryClient.invalidateQueries({ queryKey: ["doctor-today-appointments", doctorId, todayStr] });
     },
   });
 
@@ -99,7 +126,14 @@ export function DoctorSchedulePage() {
   };
 
   const handleSaveSchedule = () => {
-    saveRulesMutation.mutate(rules);
+    const payload = rules.map((r) => ({
+      weekday: r.weekday,
+      start_time: r.start_time.length === 5 ? `${r.start_time}:00` : r.start_time,
+      end_time: r.end_time.length === 5 ? `${r.end_time}:00` : r.end_time,
+      slot_duration: r.slot_duration,
+      is_active: r.is_active,
+    }));
+    saveRulesMutation.mutate(payload);
   };
 
   const todayAppointments = appointmentsData?.results || [];
@@ -131,13 +165,74 @@ export function DoctorSchedulePage() {
 
         {/* ─── 1. Weekly Availability Rules Matrix ─── */}
         <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
               <Calendar size={18} className="text-teal-700" /> Recurring Weekly Working Hours
             </h3>
-            <span className="text-xs text-slate-400 font-medium">
-              Slots generate automatically for 14 days
+            <span className="text-xs text-teal-800 font-semibold bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+              Slots generate automatically for 7 days
             </span>
+          </div>
+
+          {/* Quick Presets Bar */}
+          <div className="flex items-center gap-2 flex-wrap p-3 rounded-2xl bg-slate-50 border border-slate-200">
+            <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
+              <Sparkles size={13} className="text-teal-700" /> Presets:
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setRules((prev) =>
+                  prev.map((r) => ({
+                    ...r,
+                    start_time: "09:00",
+                    end_time: "17:00",
+                    slot_duration: 30,
+                    is_active: r.weekday <= 5,
+                  }))
+                );
+                addToast({ type: "info", title: "Preset Applied", message: "Mon-Fri 9:00 AM - 5:00 PM (30 min slots)" });
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+            >
+              Mon - Fri (9 AM - 5 PM)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRules((prev) =>
+                  prev.map((r) => ({
+                    ...r,
+                    start_time: "10:00",
+                    end_time: "18:00",
+                    slot_duration: 15,
+                    is_active: r.weekday <= 6,
+                  }))
+                );
+                addToast({ type: "info", title: "Preset Applied", message: "Mon-Sat 10:00 AM - 6:00 PM (15 min slots)" });
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+            >
+              Mon - Sat (10 AM - 6 PM)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setRules((prev) =>
+                  prev.map((r) => ({
+                    ...r,
+                    start_time: "09:00",
+                    end_time: "14:00",
+                    slot_duration: 30,
+                    is_active: true,
+                  }))
+                );
+                addToast({ type: "info", title: "Preset Applied", message: "All 7 Days (Morning 9 AM - 2 PM)" });
+              }}
+              className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+            >
+              7 Days (Morning 9 AM - 2 PM)
+            </button>
           </div>
 
           <div className="space-y-3 divide-y divide-slate-100">
@@ -166,11 +261,11 @@ export function DoctorSchedulePage() {
                       onChange={(e) =>
                         handleRuleChange(day.id, "is_active", e.target.checked)
                       }
-                      className="w-4 h-4 text-teal-800 rounded border-slate-300 focus:ring-teal-700"
+                      className="w-4 h-4 text-teal-800 rounded border-slate-300 focus:ring-teal-700 cursor-pointer"
                     />
                     <label
                       htmlFor={`day-${day.id}`}
-                      className={`text-xs font-bold ${
+                      className={`text-xs font-bold cursor-pointer ${
                         rule.is_active ? "text-slate-900" : "text-slate-400"
                       }`}
                     >
@@ -188,7 +283,7 @@ export function DoctorSchedulePage() {
                           onChange={(e) =>
                             handleRuleChange(day.id, "start_time", e.target.value)
                           }
-                          className="p-1.5 rounded-lg border border-slate-200 text-xs font-bold bg-white"
+                          className="px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-teal-700"
                         />
                       </div>
 
@@ -200,31 +295,33 @@ export function DoctorSchedulePage() {
                           onChange={(e) =>
                             handleRuleChange(day.id, "end_time", e.target.value)
                           }
-                          className="p-1.5 rounded-lg border border-slate-200 text-xs font-bold bg-white"
+                          className="px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-teal-700"
                         />
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs">
                         <span className="text-slate-400 font-medium">Slot:</span>
-                        <select
-                          value={rule.slot_duration}
-                          onChange={(e) =>
-                            handleRuleChange(
-                              day.id,
-                              "slot_duration",
-                              Number(e.target.value)
-                            )
-                          }
-                          className="p-1.5 rounded-lg border border-slate-200 text-xs font-bold bg-white"
-                        >
-                          <option value={15}>15 Mins</option>
-                          <option value={30}>30 Mins</option>
-                        </select>
+                        <div className="flex items-center gap-1">
+                          {[15, 30, 45, 60].map((dur) => (
+                            <button
+                              key={dur}
+                              type="button"
+                              onClick={() => handleRuleChange(day.id, "slot_duration", dur)}
+                              className={`text-[11px] px-2 py-0.5 rounded-lg border font-semibold transition-colors cursor-pointer ${
+                                rule.slot_duration === dur
+                                  ? "bg-teal-800 text-white border-teal-800"
+                                  : "bg-white text-slate-600 border-slate-200 hover:border-teal-400"
+                              }`}
+                            >
+                              {dur}m
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <span className="text-xs text-slate-400 italic">
-                      Unavailable / Clinic Closed
+                    <span className="text-xs font-medium text-slate-400 italic">
+                      Clinic Closed / No Appointments
                     </span>
                   )}
                 </div>

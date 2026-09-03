@@ -5,7 +5,7 @@ import { useAuthStore } from "../../stores/authStore";
 import type { NotificationItem } from "./api";
 
 export function useNotificationsWebSocket() {
-  const { accessToken, isAuthenticated } = useAuthStore();
+  const { user, accessToken, isAuthenticated } = useAuthStore();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -15,7 +15,7 @@ export function useNotificationsWebSocket() {
   const reconnectTimeoutRef = useRef<any>(null);
 
   const connect = useCallback(() => {
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated || !accessToken || !user?.id) {
       if (wsRef.current) {
         wsRef.current.close();
         wsRef.current = null;
@@ -28,6 +28,11 @@ export function useNotificationsWebSocket() {
     const wsUrl = `ws://${host}:${port}/ws/notifications/?token=${encodeURIComponent(accessToken)}`;
 
     try {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -41,21 +46,26 @@ export function useNotificationsWebSocket() {
 
           if (data.type === "initial_state") {
             setUnreadCount(data.unread_count || 0);
-            queryClient.setQueryData(["notifications-unread-count"], {
+            queryClient.setQueryData(["notifications-unread-count", user.id], {
               unread_count: data.unread_count || 0,
             });
           } else if (data.type === "new_notification") {
             const notif: NotificationItem = data.notification;
-            const newCount = data.unread_count;
 
+            // Strict user isolation: never display notifications destined for other users
+            if (notif?.recipient_id && notif.recipient_id !== user.id) {
+              return;
+            }
+
+            const newCount = data.unread_count;
             setUnreadCount(newCount);
-            queryClient.setQueryData(["notifications-unread-count"], {
+            queryClient.setQueryData(["notifications-unread-count", user.id], {
               unread_count: newCount,
             });
 
             // Update notifications lists in React Query cache
             queryClient.setQueriesData(
-              { queryKey: ["notifications-list"] },
+              { queryKey: ["notifications-list", user.id] },
               (oldData: any) => {
                 if (!oldData || !oldData.results) return oldData;
                 return {
@@ -74,7 +84,7 @@ export function useNotificationsWebSocket() {
             });
           } else if (data.type === "unread_count_update") {
             setUnreadCount(data.unread_count || 0);
-            queryClient.setQueryData(["notifications-unread-count"], {
+            queryClient.setQueryData(["notifications-unread-count", user.id], {
               unread_count: data.unread_count || 0,
             });
           }
@@ -100,7 +110,7 @@ export function useNotificationsWebSocket() {
     } catch (e) {
       console.error("Notification WebSocket creation failed", e);
     }
-  }, [isAuthenticated, accessToken, queryClient, toast]);
+  }, [isAuthenticated, accessToken, user?.id, queryClient, toast]);
 
   useEffect(() => {
     connect();

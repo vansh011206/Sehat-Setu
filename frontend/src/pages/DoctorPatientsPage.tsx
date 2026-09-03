@@ -95,7 +95,7 @@ export function DoctorPatientsPage() {
               size="sm"
               icon={RefreshCw}
               onClick={() => refetch()}
-              className={isFetching ? "animate-spin" : ""}
+              loading={isFetching}
             >
               Refresh
             </Button>

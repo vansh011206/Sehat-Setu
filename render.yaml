@@ -1,0 +1,32 @@
+# Render Blueprint — auto-deploys SehatSetu backend + PostgreSQL
+# See: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: sehatsetu-db
+    plan: free
+    databaseName: sehatsetu
+    user: sehatsetu
+
+services:
+  - type: web
+    name: sehatsetu-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sehatsetu-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      - key: PYTHON_VERSION
+        value: "3.13.0"
+      - key: VERCEL_FRONTEND_URL
+        sync: false  # Set manually to your Vercel URL

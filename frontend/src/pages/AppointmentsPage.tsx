@@ -20,6 +20,7 @@ import { EmptyState } from "../components/ui/EmptyState";
 import { Modal } from "../components/ui/Modal";
 import { Skeleton } from "../components/ui/Skeleton";
 import { useToast } from "../components/ui/Toast";
+import { useAuthStore } from "../stores/authStore";
 
 const CANCELLATION_REASONS = [
   "Schedule conflict / Personal emergency",
@@ -32,6 +33,7 @@ const CANCELLATION_REASONS = [
 export function AppointmentsPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const { user } = useAuthStore();
 
   const [activeTab, setActiveTab] = useState<"upcoming" | "past" | "all">("upcoming");
   const [cancellingAppointment, setCancellingAppointment] = useState<Appointment | null>(null);
@@ -45,11 +47,12 @@ export function AppointmentsPage() {
     isFetching,
     refetch,
   } = useQuery({
-    queryKey: ["appointments", activeTab],
+    queryKey: ["appointments", user?.id, activeTab],
     queryFn: () =>
       bookingsApi.getAppointments({
         upcoming: activeTab === "upcoming" ? "true" : activeTab === "past" ? "false" : undefined,
       }),
+    enabled: !!user?.id,
   });
 
   // Cancel mutation
@@ -62,7 +65,7 @@ export function AppointmentsPage() {
         title: "Appointment Cancelled",
         message: "Your appointment has been cancelled successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments", user?.id] });
       setCancellingAppointment(null);
     },
     onError: (err: any) => {
@@ -124,7 +127,7 @@ export function AppointmentsPage() {
               size="sm"
               icon={RefreshCw}
               onClick={() => refetch()}
-              className={isFetching ? "animate-spin" : ""}
+              loading={isFetching}
             >
               Refresh
             </Button>

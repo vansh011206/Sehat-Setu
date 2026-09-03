@@ -242,7 +242,7 @@ export function DoctorDashboard() {
             size="sm"
             icon={RefreshCw}
             onClick={() => refetch()}
-            className={isFetching ? "animate-spin" : ""}
+            loading={isFetching}
             title="Refresh clinical metrics"
           >
             Refresh

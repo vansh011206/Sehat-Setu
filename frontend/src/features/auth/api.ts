@@ -16,7 +16,18 @@ export interface RegisterPayload {
   phone: string;
   email?: string;
   password: string;
+  confirm_password?: string;
   role: "PATIENT" | "DOCTOR";
+  specialty_id?: number;
+  specialty_name?: string;
+  qualification?: string;
+  years_of_experience?: number;
+  registration_number?: string;
+  bio?: string;
+  city?: string;
+  consultation_fee?: number;
+  clinic_name?: string;
+  clinic_address?: string;
 }
 
 export interface LoginPayload {

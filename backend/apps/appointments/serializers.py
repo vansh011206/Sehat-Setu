@@ -28,6 +28,10 @@ class AvailabilityRuleSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
+        is_active = attrs.get("is_active", True)
+        if not is_active:
+            return attrs
+
         start_time = attrs.get("start_time")
         end_time = attrs.get("end_time")
         slot_duration = attrs.get("slot_duration", 30)

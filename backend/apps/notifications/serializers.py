@@ -9,11 +9,13 @@ from .models import Notification
 
 class NotificationSerializer(serializers.ModelSerializer):
     actor = UserMinimalSerializer(read_only=True)
+    recipient_id = serializers.IntegerField(source="recipient.id", read_only=True)
 
     class Meta:
         model = Notification
         fields = (
             "id",
+            "recipient_id",
             "type",
             "title",
             "message",
