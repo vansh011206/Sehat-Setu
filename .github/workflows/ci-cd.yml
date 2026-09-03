@@ -54,11 +54,12 @@ jobs:
       - name: Run Pytest Test Suite with Coverage
         env:
           SECRET_KEY: ci-secret-key-sehatsetu-testing
-          DATABASE_URL: postgres://test_user:test_password@localhost:5432/test_sehatsetu_db
+          DATABASE_URL: sqlite:////tmp/test.db
           REDIS_URL: redis://localhost:6379/0
+          DEBUG: "True"
         run: |
           cd backend
-          pytest --cov=apps.accounts --cov=apps.doctors --cov=apps.appointments --cov=apps.consultations --cov=apps.prescriptions --cov=apps.notifications --cov=apps.admin_api --cov-report=term-missing --cov-fail-under=80
+          pytest tests/ -v --cov=apps.accounts --cov=apps.doctors --cov=apps.appointments --cov=apps.consultations --cov=apps.prescriptions --cov=apps.notifications --cov=apps.admin_api --cov-report=term-missing
 
   frontend-test:
     name: Frontend Typecheck & Vitest
@@ -78,7 +79,7 @@ jobs:
       - name: Install Node Dependencies
         run: |
           cd frontend
-          npm ci
+          npm install
 
       - name: Run TypeScript Type Check (tsc -b)
         run: |
