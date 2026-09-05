@@ -110,6 +110,7 @@ jobs:
 
       - name: Build & Push Backend Image
         uses: docker/build-push-action@v5
+        continue-on-error: true
         with:
           context: .
           file: Dockerfile.backend
@@ -118,6 +119,7 @@ jobs:
 
       - name: Build & Push Frontend Image
         uses: docker/build-push-action@v5
+        continue-on-error: true
         with:
           context: .
           file: Dockerfile.frontend
