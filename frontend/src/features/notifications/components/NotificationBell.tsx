@@ -141,24 +141,34 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="relative p-2 rounded-xl text-slate-600 hover:text-ink hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer"
+        className="relative p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-600 hover:text-ink hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer"
         aria-label="Notifications"
         title="View Notifications"
       >
         <Bell size={20} />
 
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums shadow-xs animate-pulse ring-2 ring-white">
+          <span className="absolute top-1.5 right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center tabular-nums shadow-xs animate-pulse ring-2 ring-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
       </button>
 
-      {/* ─── Notification Dropdown Panel ─── */}
+      {/* ─── Notification Panel: Mobile Bottom Sheet / Desktop Dropdown ─── */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl border border-border shadow-xl z-50 overflow-hidden animate-fadeIn flex flex-col max-h-[520px]">
-          {/* Header */}
-          <div className="p-3.5 sm:p-4 border-b border-border flex items-center justify-between bg-slate-50/80">
+        <>
+          {/* Mobile backdrop */}
+          <div
+            className="fixed inset-0 bg-ink/40 backdrop-blur-xs z-50 sm:hidden"
+            onClick={() => setIsOpen(false)}
+          />
+
+          <div className="fixed inset-x-0 bottom-0 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-full sm:w-96 bg-white rounded-t-3xl sm:rounded-2xl border border-border shadow-2xl sm:shadow-xl z-50 overflow-hidden animate-fadeIn flex flex-col max-h-[85dvh] sm:max-h-[520px]">
+            {/* Mobile Drag Indicator */}
+            <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto mt-2.5 sm:hidden" />
+
+            {/* Header */}
+            <div className="p-3.5 sm:p-4 border-b border-border flex items-center justify-between bg-slate-50/80">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold font-heading text-ink">
                 Notifications
@@ -280,7 +290,8 @@ export function NotificationBell() {
             </Link>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </>
+    )}
+  </div>
+);
 }

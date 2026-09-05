@@ -161,54 +161,54 @@ export function AdminOverviewPage() {
           </div>
         </div>
 
-        {/* ─── KPI Metric Cards (4 Cards) ─── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* ─── KPI Metric Cards (2x2 on mobile, 4 on desktop) ─── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {statCards.map((card, idx) => {
             const Icon = card.icon;
             const isPositive = card.delta >= 0;
             return (
               <div
                 key={idx}
-                className="bg-white p-5 rounded-3xl border border-slate-200 shadow-xs space-y-3 relative overflow-hidden transition-all hover:shadow-md"
+                className="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs space-y-2 sm:space-y-3 relative overflow-hidden transition-all hover:shadow-md flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider line-clamp-1">
                     {card.title}
                   </span>
                   <div
-                    className={`w-11 h-11 rounded-2xl ${card.bgColor} ${card.textColor} border ${card.borderColor} flex items-center justify-center shadow-2xs`}
+                    className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${card.bgColor} ${card.textColor} border ${card.borderColor} flex items-center justify-center shadow-2xs shrink-0`}
                   >
-                    <Icon size={19} />
+                    <Icon size={16} />
                   </div>
                 </div>
 
                 {isOverviewLoading ? (
-                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-7 w-20" />
                 ) : (
                   <div>
-                    <div className="text-2xl font-black font-heading text-slate-900 tabular-nums">
+                    <div className="text-base sm:text-xl lg:text-2xl font-black font-heading text-slate-900 tabular-nums truncate">
                       {card.value}
                     </div>
 
-                    <div className="flex items-center gap-1.5 mt-1.5">
+                    <div className="flex items-center gap-1 sm:gap-1.5 mt-1">
                       <span
-                        className={`inline-flex items-center gap-0.5 text-xs font-bold ${
+                        className={`inline-flex items-center gap-0.5 text-[10px] sm:text-xs font-bold ${
                           isPositive ? "text-emerald-700" : "text-rose-600"
                         }`}
                       >
                         {isPositive ? (
-                          <TrendingUp size={14} />
+                          <TrendingUp size={12} />
                         ) : (
-                          <TrendingDown size={14} />
+                          <TrendingDown size={12} />
                         )}
                         {Math.abs(card.delta)}%
                       </span>
-                      <span className="text-[11px] text-slate-400 font-medium">
-                        vs prior period
+                      <span className="text-[9px] sm:text-[11px] text-slate-400 font-medium truncate">
+                        vs prior
                       </span>
                     </div>
 
-                    <p className="text-[11px] text-slate-400 mt-2 border-t border-slate-100 pt-2 font-medium">
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-1.5 sm:mt-2 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium line-clamp-1">
                       {card.subtitle}
                     </p>
                   </div>
@@ -221,25 +221,25 @@ export function AdminOverviewPage() {
         {/* ─── Main Charts Row (Revenue Trend & Status Distribution) ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Revenue Trend (2 cols) */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+          <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold font-heading text-ink">
+                <h3 className="text-sm sm:text-base font-bold font-heading text-ink">
                   Revenue & Consultation Trend
                 </h3>
-                <p className="text-xs text-muted">
+                <p className="text-[11px] sm:text-xs text-muted">
                   Daily completed consultation revenue (₹) over the last {range.toUpperCase()}
                 </p>
               </div>
-              <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2.5 py-1 rounded-full">
+              <span className="text-[10px] sm:text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shrink-0">
                 {range.toUpperCase()} Range
               </span>
             </div>
 
             {isTrendLoading ? (
-              <Skeleton className="h-72 w-full rounded-xl" variant="rect" />
+              <Skeleton className="h-52 sm:h-72 w-full rounded-xl" variant="rect" />
             ) : (
-              <div className="h-72 w-full">
+              <div className="h-52 sm:h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
                     data={trendData || []}
@@ -258,7 +258,7 @@ export function AdminOverviewPage() {
                         const d = new Date(val);
                         return `${d.getDate()} ${d.toLocaleString("default", { month: "short" })}`;
                       }}
-                      tick={{ fontSize: 11, fill: "#64748b" }}
+                      tick={{ fontSize: 10, fill: "#64748b" }}
                       axisLine={{ stroke: "#e2e8f0" }}
                       tickLine={false}
                     />
@@ -392,9 +392,9 @@ export function AdminOverviewPage() {
             </div>
 
             {isSpecialtyLoading ? (
-              <Skeleton className="h-64 w-full rounded-xl" variant="rect" />
+              <Skeleton className="h-52 sm:h-64 w-full rounded-xl" variant="rect" />
             ) : (
-              <div className="h-64 w-full">
+              <div className="h-52 sm:h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
                     data={specialtyData || []}

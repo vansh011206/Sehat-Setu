@@ -94,10 +94,28 @@ export function DoctorSchedulePage() {
       queryClient.invalidateQueries({ queryKey: ["doctor-availability", doctorId] });
     },
     onError: (err: any) => {
+      const data = err?.response?.data;
+      let errorMsg = "Could not update availability rules.";
+      if (typeof data === "string") {
+        errorMsg = data;
+      } else if (data?.detail) {
+        errorMsg = data.detail;
+      } else if (Array.isArray(data)) {
+        const found = data.find((item) => item && typeof item === "object" && Object.keys(item).length > 0);
+        if (found) {
+          const firstKey = Object.keys(found)[0];
+          const val = found[firstKey];
+          errorMsg = Array.isArray(val) ? val[0] : String(val);
+        }
+      } else if (typeof data === "object" && data !== null) {
+        const firstKey = Object.keys(data)[0];
+        const val = data[firstKey];
+        errorMsg = Array.isArray(val) ? val[0] : String(val);
+      }
       addToast({
         type: "error",
         title: "Update Failed",
-        message: err?.response?.data?.detail || "Could not update availability rules.",
+        message: errorMsg,
       });
     },
   });
@@ -144,7 +162,7 @@ export function DoctorSchedulePage() {
         {/* Header Banner */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold font-heading text-slate-900">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold font-heading text-slate-900">
               Doctor Schedule & Working Hours
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
@@ -158,25 +176,26 @@ export function DoctorSchedulePage() {
             icon={Save}
             isLoading={saveRulesMutation.isPending}
             onClick={handleSaveSchedule}
+            className="w-full sm:w-auto min-h-[44px] font-bold"
           >
             Save Weekly Schedule
           </Button>
         </div>
 
         {/* ─── 1. Weekly Availability Rules Matrix ─── */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
+        <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-5">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
+            <h3 className="text-sm sm:text-base font-bold font-heading text-slate-900 flex items-center gap-2">
               <Calendar size={18} className="text-teal-700" /> Recurring Weekly Working Hours
             </h3>
-            <span className="text-xs text-teal-800 font-semibold bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
+            <span className="text-[11px] sm:text-xs text-teal-800 font-semibold bg-teal-50 px-2.5 py-1 rounded-full border border-teal-200">
               Slots generate automatically for 7 days
             </span>
           </div>
 
-          {/* Quick Presets Bar */}
-          <div className="flex items-center gap-2 flex-wrap p-3 rounded-2xl bg-slate-50 border border-slate-200">
-            <span className="text-xs font-bold text-slate-700 flex items-center gap-1">
+          {/* Quick Presets Bar - Horizontal scrollable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none p-2.5 sm:p-3 rounded-2xl bg-slate-50 border border-slate-200">
+            <span className="text-xs font-bold text-slate-700 flex items-center gap-1 shrink-0">
               <Sparkles size={13} className="text-teal-700" /> Presets:
             </span>
             <button
@@ -193,7 +212,7 @@ export function DoctorSchedulePage() {
                 );
                 addToast({ type: "info", title: "Preset Applied", message: "Mon-Fri 9:00 AM - 5:00 PM (30 min slots)" });
               }}
-              className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs shrink-0 min-h-[36px]"
             >
               Mon - Fri (9 AM - 5 PM)
             </button>
@@ -211,7 +230,7 @@ export function DoctorSchedulePage() {
                 );
                 addToast({ type: "info", title: "Preset Applied", message: "Mon-Sat 10:00 AM - 6:00 PM (15 min slots)" });
               }}
-              className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs shrink-0 min-h-[36px]"
             >
               Mon - Sat (10 AM - 6 PM)
             </button>
@@ -229,7 +248,7 @@ export function DoctorSchedulePage() {
                 );
                 addToast({ type: "info", title: "Preset Applied", message: "All 7 Days (Morning 9 AM - 2 PM)" });
               }}
-              className="text-xs font-semibold px-2.5 py-1 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white border border-slate-200 hover:border-teal-400 text-slate-700 transition-colors cursor-pointer shadow-2xs shrink-0 min-h-[36px]"
             >
               7 Days (Morning 9 AM - 2 PM)
             </button>
@@ -249,11 +268,11 @@ export function DoctorSchedulePage() {
               return (
                 <div
                   key={day.id}
-                  className={`pt-3 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl transition-all ${
+                  className={`pt-3 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl transition-all ${
                     rule.is_active ? "bg-teal-50/40 border border-teal-100" : "bg-slate-50/60"
                   }`}
                 >
-                  <div className="flex items-center gap-3 w-36">
+                  <div className="flex items-center gap-3 min-h-[36px]">
                     <input
                       type="checkbox"
                       id={`day-${day.id}`}
@@ -261,11 +280,11 @@ export function DoctorSchedulePage() {
                       onChange={(e) =>
                         handleRuleChange(day.id, "is_active", e.target.checked)
                       }
-                      className="w-4 h-4 text-teal-800 rounded border-slate-300 focus:ring-teal-700 cursor-pointer"
+                      className="w-5 h-5 text-teal-800 rounded border-slate-300 focus:ring-teal-700 cursor-pointer shrink-0"
                     />
                     <label
                       htmlFor={`day-${day.id}`}
-                      className={`text-xs font-bold cursor-pointer ${
+                      className={`text-xs sm:text-sm font-bold cursor-pointer select-none ${
                         rule.is_active ? "text-slate-900" : "text-slate-400"
                       }`}
                     >
@@ -274,32 +293,34 @@ export function DoctorSchedulePage() {
                   </div>
 
                   {rule.is_active ? (
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-slate-400 font-medium">From:</span>
-                        <input
-                          type="time"
-                          value={rule.start_time.slice(0, 5)}
-                          onChange={(e) =>
-                            handleRuleChange(day.id, "start_time", e.target.value)
-                          }
-                          className="px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-teal-700"
-                        />
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-3 flex-wrap">
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-2">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-slate-400 font-medium">From:</span>
+                          <input
+                            type="time"
+                            value={rule.start_time.slice(0, 5)}
+                            onChange={(e) =>
+                              handleRuleChange(day.id, "start_time", e.target.value)
+                            }
+                            className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-teal-700 min-h-[40px] w-full sm:w-auto"
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-slate-400 font-medium">To:</span>
+                          <input
+                            type="time"
+                            value={rule.end_time.slice(0, 5)}
+                            onChange={(e) =>
+                              handleRuleChange(day.id, "end_time", e.target.value)
+                            }
+                            className="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-teal-700 min-h-[40px] w-full sm:w-auto"
+                          />
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 text-xs">
-                        <span className="text-slate-400 font-medium">To:</span>
-                        <input
-                          type="time"
-                          value={rule.end_time.slice(0, 5)}
-                          onChange={(e) =>
-                            handleRuleChange(day.id, "end_time", e.target.value)
-                          }
-                          className="px-2.5 py-1 rounded-xl border border-slate-200 text-xs font-bold text-slate-800 bg-white focus:ring-1 focus:ring-teal-700"
-                        />
-                      </div>
-
-                      <div className="flex items-center gap-1.5 text-xs">
+                      <div className="flex items-center gap-1.5 text-xs pt-1 sm:pt-0">
                         <span className="text-slate-400 font-medium">Slot:</span>
                         <div className="flex items-center gap-1">
                           {[15, 30, 45, 60].map((dur) => (
@@ -307,7 +328,7 @@ export function DoctorSchedulePage() {
                               key={dur}
                               type="button"
                               onClick={() => handleRuleChange(day.id, "slot_duration", dur)}
-                              className={`text-[11px] px-2 py-0.5 rounded-lg border font-semibold transition-colors cursor-pointer ${
+                              className={`text-xs px-2.5 py-1 rounded-lg border font-semibold transition-colors cursor-pointer min-h-[36px] ${
                                 rule.slot_duration === dur
                                   ? "bg-teal-800 text-white border-teal-800"
                                   : "bg-white text-slate-600 border-slate-200 hover:border-teal-400"
@@ -331,10 +352,10 @@ export function DoctorSchedulePage() {
         </div>
 
         {/* ─── 2. Today's Patient Appointments Queue ─── */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-3xl border border-slate-200 p-4 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-bold font-heading text-slate-900 flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold font-heading text-slate-900 flex items-center gap-2">
                 <Stethoscope size={18} className="text-teal-700" /> Today's Consultation Schedule
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -347,6 +368,7 @@ export function DoctorSchedulePage() {
               size="sm"
               icon={RefreshCw}
               onClick={() => refetchAppointments()}
+              className="w-full sm:w-auto min-h-[44px] sm:min-h-0"
             >
               Refresh Queue
             </Button>
@@ -402,12 +424,13 @@ export function DoctorSchedulePage() {
                     )}
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <Button
                       variant="outline"
                       size="sm"
                       icon={Video}
                       onClick={() => window.open("/consultations", "_self")}
+                      className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                     >
                       Start Call
                     </Button>
@@ -418,6 +441,7 @@ export function DoctorSchedulePage() {
                         icon={CheckCircle2}
                         isLoading={completeMutation.isPending}
                         onClick={() => completeMutation.mutate(apt.id)}
+                        className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                       >
                         Complete
                       </Button>

@@ -4,6 +4,7 @@ import { useAuthStore } from "../stores/authStore";
 import { Avatar } from "../components/ui/Avatar";
 import { useState, useRef, useEffect } from "react";
 import { NotificationBell } from "../features/notifications/components/NotificationBell";
+import { LanModeBadge } from "../components/LanModeBadge";
 
 interface NavbarProps {
   onMenuToggle: () => void;
@@ -36,24 +37,27 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
         <div className="flex items-center gap-3">
           <button
             onClick={onMenuToggle}
-            className="lg:hidden p-2 rounded-lg text-muted hover:text-ink hover:bg-surface transition-colors cursor-pointer"
+            className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-muted hover:text-ink hover:bg-surface transition-colors cursor-pointer"
             aria-label="Toggle menu"
           >
             <Menu size={20} />
           </button>
 
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-primary-900 flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-2.5 min-h-[44px]">
+            <div className="w-9 h-9 rounded-xl bg-primary-900 flex items-center justify-center shrink-0">
               <Activity size={20} className="text-white" />
             </div>
-            <span className="text-lg font-bold font-heading text-ink hidden sm:block">
+            <span className="text-base sm:text-lg font-bold font-heading text-ink">
               Sehat<span className="text-primary-900">Setu</span>
             </span>
           </Link>
         </div>
 
         {/* Right — Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* LAN demo: LAN Mode network IP indicator */}
+          <LanModeBadge />
+
           {isAuthenticated && user ? (
             <>
               {/* Real-time Notification Bell */}
@@ -63,7 +67,8 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
               <div ref={dropdownRef} className="relative">
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-surface transition-colors cursor-pointer"
+                  className="flex items-center gap-2 p-1.5 min-w-[44px] min-h-[44px] rounded-xl hover:bg-surface transition-colors cursor-pointer"
+                  aria-label="User account menu"
                 >
                   <Avatar
                     src={user.profile_picture}
@@ -77,7 +82,7 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                 </button>
 
                 {dropdownOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-xl border border-border shadow-modal py-1 animate-fade-in">
+                  <div className="absolute right-0 top-full mt-1 w-56 max-w-[calc(100vw-24px)] bg-white rounded-2xl border border-border shadow-modal py-1 animate-fade-in z-50">
                     <div className="px-4 py-3 border-b border-border">
                       <p className="text-sm font-semibold text-ink truncate">{user.full_name}</p>
                       <p className="text-xs text-muted truncate">{user.phone}</p>
@@ -85,14 +90,14 @@ export function Navbar({ onMenuToggle }: NavbarProps) {
                     <Link
                       to="/profile"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink hover:bg-surface transition-colors"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-ink hover:bg-surface transition-colors min-h-[44px]"
                     >
                       <User size={16} className="text-muted" />
                       My Profile
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors cursor-pointer min-h-[44px]"
                     >
                       <LogOut size={16} />
                       Sign Out

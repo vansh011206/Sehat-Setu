@@ -44,10 +44,10 @@ class AvailabilityRuleSerializer(serializers.ModelSerializer):
             end_mins = end_time.hour * 60 + end_time.minute
             window = end_mins - start_mins
 
-            if window % slot_duration != 0:
+            if window < slot_duration:
                 raise serializers.ValidationError(
                     {
-                        "slot_duration": f"Total availability window ({window} mins) must be evenly divisible by slot duration ({slot_duration} mins)."
+                        "end_time": f"Total availability window ({window} mins) must be at least one slot duration ({slot_duration} mins)."
                     }
                 )
         return attrs

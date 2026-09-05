@@ -8,8 +8,20 @@ import { AppLayout } from "../layouts/AppLayout";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
+import { ResponsiveTable, type Column } from "../components/ui/ResponsiveTable";
 
-const mockUsers = [
+interface MockUser {
+  id: number;
+  name: string;
+  phone: string;
+  email: string;
+  role: string;
+  status: string;
+  registeredAt: string;
+  specialty?: string;
+}
+
+const mockUsers: MockUser[] = [
   {
     id: 1,
     name: "System Administrator",
@@ -63,13 +75,73 @@ export function AdminUsersPage() {
     return matchesSearch && matchesRole;
   });
 
+  const userColumns: Column<MockUser>[] = [
+    {
+      key: "name",
+      header: "User Details",
+      render: (u) => (
+        <div className="text-left">
+          <div className="font-bold text-slate-900">{u.name}</div>
+          <div className="text-slate-400 text-[11px] font-normal">{u.email}</div>
+        </div>
+      ),
+    },
+    {
+      key: "phone",
+      header: "Phone",
+      render: (u) => <span className="font-medium text-slate-700">{u.phone}</span>,
+    },
+    {
+      key: "role",
+      header: "Role",
+      render: (u) => (
+        <Badge
+          variant={
+            u.role === "ADMIN"
+              ? "danger"
+              : u.role === "DOCTOR"
+              ? "teal"
+              : "default"
+          }
+          size="sm"
+        >
+          {u.role}
+        </Badge>
+      ),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (u) => (
+        <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
+          <CheckCircle2 size={13} /> {u.status}
+        </span>
+      ),
+    },
+    {
+      key: "registeredAt",
+      header: "Registered Date",
+      render: (u) => <span className="text-slate-500">{u.registeredAt}</span>,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      className: "text-right",
+      render: () => (
+        <Button variant="outline" size="sm" className="min-h-[36px]">
+          View Audit
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <AppLayout showSidebar={true}>
       <div className="space-y-6 max-w-6xl mx-auto pb-12">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold font-heading text-slate-900">
+            <h1 className="text-xl sm:text-2xl font-bold font-heading text-slate-900">
               User & Doctor Directory Management
             </h1>
             <p className="text-xs text-slate-500 mt-1">
@@ -86,8 +158,8 @@ export function AdminUsersPage() {
         </div>
 
         {/* Filter Controls */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs">
+          <div className="flex-1 w-full">
             <Input
               type="text"
               placeholder="Search user name, phone (+91...), or email..."
@@ -97,13 +169,13 @@ export function AdminUsersPage() {
             />
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 sm:pb-0">
             {["ALL", "PATIENT", "DOCTOR", "ADMIN"].map((r) => (
               <button
                 key={r}
                 type="button"
                 onClick={() => setRoleFilter(r)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 min-h-[36px] cursor-pointer ${
                   roleFilter === r
                     ? "bg-teal-800 text-white shadow-xs"
                     : "bg-slate-50 text-slate-600 border border-slate-200 hover:border-teal-300"
@@ -115,59 +187,13 @@ export function AdminUsersPage() {
           </div>
         </div>
 
-        {/* Users Table */}
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
-                <tr>
-                  <th className="p-4">User Details</th>
-                  <th className="p-4">Phone / Identifier</th>
-                  <th className="p-4">Role</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Registered Date</th>
-                  <th className="p-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="p-4 font-bold text-slate-900">
-                      <div>{u.name}</div>
-                      <div className="text-slate-400 text-[11px] font-normal">{u.email}</div>
-                    </td>
-                    <td className="p-4 font-medium text-slate-700">{u.phone}</td>
-                    <td className="p-4">
-                      <Badge
-                        variant={
-                          u.role === "ADMIN"
-                            ? "danger"
-                            : u.role === "DOCTOR"
-                            ? "teal"
-                            : "default"
-                        }
-                        size="sm"
-                      >
-                        {u.role}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="inline-flex items-center gap-1 text-emerald-700 font-bold">
-                        <CheckCircle2 size={13} /> {u.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-500">{u.registeredAt}</td>
-                    <td className="p-4 text-right">
-                      <Button variant="outline" size="sm">
-                        View Audit
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* Users Table (Responsive Table / Mobile Card List) */}
+        <ResponsiveTable
+          columns={userColumns}
+          data={filteredUsers}
+          keyExtractor={(u) => u.id}
+          emptyMessage="No users found matching the selected filters."
+        />
       </div>
     </AppLayout>
   );

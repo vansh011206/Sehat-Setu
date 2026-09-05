@@ -66,7 +66,7 @@ export function AdminPatientsPage() {
         {/* ─── Header ─── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold font-heading text-ink flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold font-heading text-ink flex items-center gap-2.5">
               <Users size={24} className="text-teal-700" />
               Patient Accounts Directory
             </h1>
@@ -75,14 +75,14 @@ export function AdminPatientsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               icon={Download}
               onClick={handleExportCsv}
               disabled={patients.length === 0}
-              className="text-xs font-bold"
+              className="text-xs font-bold w-full sm:w-auto min-h-[44px] sm:min-h-0"
             >
               Export CSV
             </Button>
@@ -93,7 +93,7 @@ export function AdminPatientsPage() {
               icon={RefreshCw}
               loading={isRefetching}
               onClick={() => refetch()}
-              className="text-xs"
+              className="text-xs w-full sm:w-auto min-h-[44px] sm:min-h-0"
             >
               Refresh
             </Button>
@@ -101,7 +101,7 @@ export function AdminPatientsPage() {
         </div>
 
         {/* ─── Search Bar ─── */}
-        <div className="bg-white p-4 rounded-2xl border border-border shadow-2xs">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-border shadow-2xs">
           <div className="relative max-w-md">
             <Search
               size={16}
@@ -112,13 +112,13 @@ export function AdminPatientsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search patients by name, phone, email..."
-              className="w-full bg-slate-50 border border-border text-ink text-xs pl-10 pr-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700"
+              className="w-full bg-slate-50 border border-border text-ink text-xs pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 min-h-[44px]"
             />
           </div>
         </div>
 
-        {/* ─── Patients Table ─── */}
-        <div className="bg-white rounded-2xl border border-border shadow-xs overflow-hidden">
+        {/* ─── Desktop Table View (md+) ─── */}
+        <div className="hidden md:block bg-white rounded-2xl border border-border shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
@@ -277,6 +277,117 @@ export function AdminPatientsPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* ─── Mobile Card List View (<md) ─── */}
+        <div className="md:hidden space-y-3">
+          {isLoading ? (
+            [1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white p-4 rounded-2xl border border-border shadow-xs space-y-2">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            ))
+          ) : patients.length > 0 ? (
+            patients.map((pat) => {
+              const isExpanded = expandedPatientId === pat.id;
+
+              return (
+                <div
+                  key={pat.id}
+                  className="bg-white rounded-2xl border border-border shadow-xs overflow-hidden"
+                >
+                  <div
+                    onClick={() => toggleExpand(pat.id)}
+                    className="p-4 space-y-3 cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-800 font-bold text-xs flex items-center justify-center shrink-0">
+                          {pat.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-bold text-ink text-sm">{pat.name}</p>
+                          <span className="text-[10px] text-muted font-mono">ID #{pat.id}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 text-slate-400">
+                        <span className="text-[11px] font-semibold text-teal-700">
+                          {isExpanded ? "Hide History" : "View History"}
+                        </span>
+                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                      <div>
+                        <span className="text-muted text-[10px] block font-semibold">Phone</span>
+                        <span className="font-medium text-slate-800">{pat.phone}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted text-[10px] block font-semibold">Email</span>
+                        <span className="font-medium text-slate-800 truncate block">{pat.email}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted text-[10px] block font-semibold">Appointments</span>
+                        <span className="font-bold text-slate-900">{pat.appointments_count}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted text-[10px] block font-semibold">Total Spent</span>
+                        <span className="font-bold text-teal-800 tabular-nums">
+                          ₹{Number(pat.total_spent).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Expanded Consultation History Card */}
+                  {isExpanded && (
+                    <div className="p-3 bg-slate-50 border-t border-border space-y-2">
+                      <h4 className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
+                        <Calendar size={13} className="text-teal-700" />
+                        Consultation History
+                      </h4>
+
+                      {isHistoryLoading ? (
+                        <Skeleton className="h-16 w-full rounded-lg" />
+                      ) : (appointmentHistory || []).length > 0 ? (
+                        <div className="divide-y divide-slate-200 bg-white rounded-xl border border-slate-200 overflow-hidden">
+                          {(appointmentHistory || []).map((appt) => (
+                            <div key={appt.id} className="p-2.5 space-y-1 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-ink">{appt.doctor_name}</span>
+                                <span className="text-xs font-bold text-ink tabular-nums">₹{appt.fee}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-[11px] text-muted">
+                                <span>{appt.date} • {appt.specialty}</span>
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  {appt.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted text-center py-2">
+                          No appointment history recorded.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div className="bg-white p-8 rounded-2xl border border-border text-center">
+              <EmptyState
+                icon={Users}
+                title="No patients found"
+                description="Try searching with a different name or phone number."
+              />
+            </div>
+          )}
         </div>
       </div>
     </AdminLayout>

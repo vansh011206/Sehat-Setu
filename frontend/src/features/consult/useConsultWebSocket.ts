@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { getWsBaseUrl } from "../../api/client";
 import type { ChatMessage, PresenceUser } from "./api";
 
 interface UseConsultWebSocketOptions {
@@ -28,13 +29,8 @@ export function useConsultWebSocket({
   const connect = useCallback(() => {
     if (!token || !appointmentId) return;
 
-    // Build WebSocket URL
-    const currentHost = window.location.hostname || "localhost";
-    const wsHost = `${currentHost}:8000`;
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${wsHost}/ws/consult/${appointmentId}/?token=${encodeURIComponent(
-      token
-    )}`;
+    // LAN demo: Use dynamic WebSocket helper
+    const wsUrl = `${getWsBaseUrl(`/consult/${appointmentId}/`)}?token=${encodeURIComponent(token)}`;
 
     try {
       const ws = new WebSocket(wsUrl);

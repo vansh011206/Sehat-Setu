@@ -178,12 +178,13 @@ export function DoctorDetailPage() {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="md"
                     icon={MessageSquare}
                     onClick={() => setIsReviewOpen(true)}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     Write Review
                   </Button>
@@ -192,6 +193,7 @@ export function DoctorDetailPage() {
                     size="md"
                     icon={Calendar}
                     onClick={() => setIsBookingOpen(true)}
+                    className="w-full sm:w-auto min-h-[44px]"
                   >
                     Book Appointment
                   </Button>

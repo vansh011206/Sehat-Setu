@@ -10,17 +10,29 @@ import socket
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# LAN demo: Auto-detect local machine's LAN IP via UDP socket trick
+def get_lan_ip() -> str:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except Exception:
+        return "127.0.0.1"
+
+LAN_IP = get_lan_ip()
+
 # Attempt to load django-environ if available, otherwise fallback gracefully
 try:
     import environ
 
     env = environ.Env(
         DEBUG=(bool, True),
+        LAN_MODE=(bool, False),
         SECRET_KEY=(
             str,
             "django-insecure-sehatsetu-dev-key-change-in-production-1234567890",
         ),
-        ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", "0.0.0.0", "*"]),
+        ALLOWED_HOSTS=(list, ["localhost", "127.0.0.1", "0.0.0.0", LAN_IP]),
         CORS_ALLOWED_ORIGINS=(
             list,
             [
@@ -28,6 +40,8 @@ try:
                 "http://127.0.0.1:5173",
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
+                f"http://{LAN_IP}:5173",
+                f"http://{LAN_IP}:3000",
             ],
         ),
         DATABASE_URL=(str, f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
@@ -37,7 +51,8 @@ try:
 
     SECRET_KEY = env("SECRET_KEY")
     DEBUG = env.bool("DEBUG", default=True)
-    ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+    LAN_MODE = env.bool("LAN_MODE", default=False)
+    ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1", "0.0.0.0", LAN_IP])
     CORS_ALLOWED_ORIGINS = env.list(
         "CORS_ALLOWED_ORIGINS",
         default=[
@@ -45,6 +60,8 @@ try:
             "http://127.0.0.1:5173",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
+            f"http://{LAN_IP}:5173",
+            f"http://{LAN_IP}:3000",
         ],
     )
 
@@ -67,10 +84,11 @@ except ImportError:
         "django-insecure-sehatsetu-dev-key-change-in-production-1234567890",
     )
     DEBUG = os.environ.get("DEBUG", "True").lower() in ("true", "1", "t")
-    ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*").split(",")
+    LAN_MODE = os.environ.get("LAN_MODE", "").lower() in ("1", "true", "yes")
+    ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", f"localhost,127.0.0.1,{LAN_IP}").split(",")
     CORS_ALLOWED_ORIGINS = os.environ.get(
         "CORS_ALLOWED_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000",
+        f"http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://{LAN_IP}:5173",
     ).split(",")
     DATABASES = {
         "default": {
@@ -111,7 +129,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Serve static files on Render
+]
+
+try:
+    import whitenoise  # noqa: F401
+    MIDDLEWARE.append("whitenoise.middleware.WhiteNoiseMiddleware")
+except ImportError:
+    pass
+
+MIDDLEWARE.extend([
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -119,7 +145,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-]
+])
 
 ROOT_URLCONF = "config.urls"
 
@@ -171,7 +197,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+try:
+    import whitenoise  # noqa: F401
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+except ImportError:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # Media files
 MEDIA_ROOT = BASE_DIR / "media"
@@ -232,9 +262,28 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
-# CORS Settings (Strict VITE Origin Allowlist only - No wildcard)
+# CORS Settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.vercel\.app$",
+]
+
+# CSRF Trusted Origins (required in Django 4+ for cross-origin forms/admin)
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://*.vercel.app",
+    "https://*.onrender.com",
+]
+
+# LAN demo: Permissive settings only in DEBUG or LAN_MODE; strict in production
+if DEBUG or LAN_MODE:
+    ALLOWED_HOSTS = ["*"]  # LAN demo: LAN testing ke liye; production me kabhi nahi
+    CORS_ALLOW_ALL_ORIGINS = True  # LAN demo: sirf LAN demo ke liye — production me explicit CORS_ALLOWED_ORIGINS allowlist use karna
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
 
 # DRF Spectacular OpenAPI Settings
 SPECTACULAR_SETTINGS = {
@@ -324,20 +373,31 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 # ── Production overrides (Render / deployed environments) ──
 RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    if RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+    if ".onrender.com" not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(".onrender.com")
     # Parse DATABASE_URL provided by Render PostgreSQL
-    import dj_database_url
-    DATABASES["default"] = dj_database_url.config(
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
+    try:
+        import dj_database_url
+        DATABASES["default"] = dj_database_url.config(
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    except ImportError:
+        pass
     # HTTPS hardening
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    # Add Vercel frontend to CORS
+    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+    # Add Vercel frontend to CORS and CSRF
     VERCEL_URL = os.environ.get("VERCEL_FRONTEND_URL", "")
     if VERCEL_URL:
-        CORS_ALLOWED_ORIGINS.append(VERCEL_URL)
+        formatted_url = VERCEL_URL if VERCEL_URL.startswith("http") else f"https://{VERCEL_URL}"
+        if formatted_url not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(formatted_url)
+        if formatted_url not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(formatted_url)
     CORS_ALLOW_CREDENTIALS = True

@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { Button } from "../../../components/ui/Button";
-import { Skeleton } from "../../../components/ui/Skeleton";
-import { EmptyState } from "../../../components/ui/EmptyState";
+import { Modal } from "../../../components/ui/Modal";
+import { ResponsiveTable, type Column } from "../../../components/ui/ResponsiveTable";
 import { adminApi, type AdminAppointmentItem } from "../api";
 import { exportToCsv } from "../utils/exportCsv";
 
@@ -138,7 +138,7 @@ export function AdminAppointmentsPage() {
         );
       case "CONFIRMED":
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
             Confirmed
           </span>
         );
@@ -168,12 +168,93 @@ export function AdminAppointmentsPage() {
         );
       default:
         return (
-          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
             {status}
           </span>
         );
     }
   };
+
+  const appointmentColumns: Column<AdminAppointmentItem>[] = [
+    {
+      key: "booking_code",
+      header: "Booking Code",
+      render: (appt) => (
+        <span className="font-mono font-bold text-xs text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+          {appt.booking_code}
+        </span>
+      ),
+    },
+    {
+      key: "doctor",
+      header: "Doctor",
+      render: (appt) => (
+        <div className="text-left">
+          <p className="font-bold text-ink truncate">{appt.doctor.name}</p>
+          <p className="text-[11px] text-muted truncate">{appt.doctor.specialty}</p>
+        </div>
+      ),
+    },
+    {
+      key: "patient",
+      header: "Patient",
+      render: (appt) => (
+        <div className="text-left">
+          <p className="font-bold text-slate-900 truncate">{appt.patient.name}</p>
+          <p className="text-[11px] text-muted truncate">{appt.patient.phone}</p>
+        </div>
+      ),
+    },
+    {
+      key: "slot_time",
+      header: "Slot Time",
+      render: (appt) => {
+        const startDt = new Date(appt.start_time);
+        return (
+          <div className="text-left md:text-left">
+            <p className="font-semibold text-slate-800">
+              {startDt.toLocaleDateString("en-IN", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
+            <p className="text-[11px] text-muted">
+              {startDt.toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+          </div>
+        );
+      },
+    },
+    {
+      key: "fee",
+      header: "Fee",
+      render: (appt) => <span className="font-bold text-ink tabular-nums">₹{appt.fee}</span>,
+    },
+    {
+      key: "status",
+      header: "Status",
+      className: "text-center",
+      render: (appt) => getStatusBadge(appt.status),
+    },
+    {
+      key: "actions",
+      header: "Admin Action",
+      className: "text-right",
+      render: (appt) => (
+        <button
+          onClick={() => handleOpenOverride(appt)}
+          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors border border-teal-200 cursor-pointer min-h-[36px]"
+        >
+          <Edit3 size={13} />
+          <span>Override</span>
+        </button>
+      ),
+    },
+  ];
 
   return (
     <AdminLayout>
@@ -181,7 +262,7 @@ export function AdminAppointmentsPage() {
         {/* ─── Header ─── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold font-heading text-ink flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold font-heading text-ink flex items-center gap-2.5">
               <CalendarDays size={24} className="text-teal-700" />
               Appointments Audit & Override Center
             </h1>
@@ -190,14 +271,14 @@ export function AdminAppointmentsPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               icon={Download}
               onClick={handleExportCsv}
               disabled={appointments.length === 0}
-              className="text-xs font-bold"
+              className="text-xs font-bold w-full sm:w-auto min-h-[44px] sm:min-h-0"
             >
               Export CSV
             </Button>
@@ -208,7 +289,7 @@ export function AdminAppointmentsPage() {
               icon={RefreshCw}
               loading={isRefetching}
               onClick={() => refetch()}
-              className="text-xs"
+              className="text-xs w-full sm:w-auto min-h-[44px] sm:min-h-0"
             >
               Refresh
             </Button>
@@ -216,8 +297,8 @@ export function AdminAppointmentsPage() {
         </div>
 
         {/* ─── Filters & Search ─── */}
-        <div className="bg-white p-4 rounded-2xl border border-border shadow-2xs space-y-3">
-          <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-border shadow-2xs space-y-3">
+          <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
             <div className="relative w-full md:w-80">
               <Search
                 size={16}
@@ -228,36 +309,35 @@ export function AdminAppointmentsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search booking code, doctor, patient..."
-                className="w-full bg-slate-50 border border-border text-ink text-xs pl-10 pr-4 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700"
+                className="w-full bg-slate-50 border border-border text-ink text-xs pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 min-h-[44px]"
               />
             </div>
 
-            <div className="flex items-center gap-2 w-full md:w-auto">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full md:w-auto">
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-slate-50 border border-border text-slate-700 text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer"
+                className="bg-slate-50 border border-border text-slate-700 text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer min-h-[44px] w-full"
                 title="Start Date"
               />
-              <span className="text-slate-400 text-xs">to</span>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-slate-50 border border-border text-slate-700 text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer"
+                className="bg-slate-50 border border-border text-slate-700 text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 cursor-pointer min-h-[44px] w-full"
                 title="End Date"
               />
             </div>
           </div>
 
-          {/* Status Chips */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100">
+          {/* Status Chips - Scrollable on mobile */}
+          <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100 overflow-x-auto scrollbar-none pb-1">
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.value}
                 onClick={() => setStatusFilter(f.value)}
-                className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer shrink-0 min-h-[36px] ${
                   statusFilter === f.value
                     ? "bg-teal-800 text-white shadow-2xs font-bold"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -269,135 +349,36 @@ export function AdminAppointmentsPage() {
           </div>
         </div>
 
-        {/* ─── Appointments Table ─── */}
-        <div className="bg-white rounded-2xl border border-border shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-slate-50/80 border-b border-border text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                  <th className="py-3.5 px-4">Booking Code</th>
-                  <th className="py-3.5 px-4">Doctor</th>
-                  <th className="py-3.5 px-4">Patient</th>
-                  <th className="py-3.5 px-4">Slot Time</th>
-                  <th className="py-3.5 px-4">Fee</th>
-                  <th className="py-3.5 px-4 text-center">Status</th>
-                  <th className="py-3.5 px-4 text-right">Admin Action</th>
-                </tr>
-              </thead>
+        {/* ─── Appointments Table (Responsive Table / Mobile Card List) ─── */}
+        <ResponsiveTable
+          columns={appointmentColumns}
+          data={appointments}
+          keyExtractor={(a) => a.id}
+          isLoading={isLoading}
+          emptyMessage="No appointments found matching the status filter or search parameters."
+        />
 
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {isLoading ? (
-                  [1, 2, 3, 4, 5].map((i) => (
-                    <tr key={i}>
-                      <td colSpan={7} className="p-4">
-                        <Skeleton className="h-6 w-full" />
-                      </td>
-                    </tr>
-                  ))
-                ) : appointments.length > 0 ? (
-                  appointments.map((appt) => {
-                    const startDt = new Date(appt.start_time);
-                    return (
-                      <tr
-                        key={appt.id}
-                        className="hover:bg-slate-50/80 transition-colors"
-                      >
-                        {/* Booking Code */}
-                        <td className="py-3.5 px-4">
-                          <span className="font-mono font-bold text-xs text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
-                            {appt.booking_code}
-                          </span>
-                        </td>
-
-                        {/* Doctor */}
-                        <td className="py-3.5 px-4">
-                          <p className="font-bold text-ink truncate">
-                            {appt.doctor.name}
-                          </p>
-                          <p className="text-[11px] text-muted truncate">
-                            {appt.doctor.specialty}
-                          </p>
-                        </td>
-
-                        {/* Patient */}
-                        <td className="py-3.5 px-4">
-                          <p className="font-bold text-slate-900 truncate">
-                            {appt.patient.name}
-                          </p>
-                          <p className="text-[11px] text-muted truncate">
-                            {appt.patient.phone}
-                          </p>
-                        </td>
-
-                        {/* Slot Time */}
-                        <td className="py-3.5 px-4">
-                          <p className="font-semibold text-slate-800">
-                            {startDt.toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </p>
-                          <p className="text-[11px] text-muted">
-                            {startDt.toLocaleTimeString("en-IN", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
-                        </td>
-
-                        {/* Fee */}
-                        <td className="py-3.5 px-4 font-bold text-ink tabular-nums">
-                          ₹{appt.fee}
-                        </td>
-
-                        {/* Status */}
-                        <td className="py-3.5 px-4 text-center">
-                          {getStatusBadge(appt.status)}
-                        </td>
-
-                        {/* Action */}
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => handleOpenOverride(appt)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors border border-teal-200 cursor-pointer"
-                          >
-                            <Edit3 size={13} />
-                            <span>Override</span>
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center">
-                      <EmptyState
-                        icon={CalendarDays}
-                        title="No appointments found"
-                        description="Try adjusting your status filter or search parameters."
-                      />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ─── Status Override Modal ─── */}
-        {overrideModalOpen && selectedAppt && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 border border-border shadow-xl space-y-4">
+        {/* ─── Status Override Modal (Bottom Sheet on Mobile) ─── */}
+        <Modal
+          open={overrideModalOpen && !!selectedAppt}
+          onClose={() => {
+            setOverrideModalOpen(false);
+            setSelectedAppt(null);
+          }}
+          title="Override Appointment Status"
+          size="md"
+        >
+          {selectedAppt && (
+            <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center shrink-0">
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold font-heading text-ink">
-                    Override Appointment Status
+                  <h3 className="text-sm font-bold font-heading text-ink">
+                    Manual State Override
                   </h3>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted font-mono">
                     Booking Code: {selectedAppt.booking_code}
                   </p>
                 </div>
@@ -426,7 +407,7 @@ export function AdminAppointmentsPage() {
                   <select
                     value={targetStatus}
                     onChange={(e) => setTargetStatus(e.target.value)}
-                    className="w-full bg-slate-50 border border-border text-ink text-xs px-3 py-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 font-medium cursor-pointer"
+                    className="w-full bg-slate-50 border border-border text-ink text-xs px-3 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 font-medium cursor-pointer min-h-[44px]"
                   >
                     <option value="COMPLETED">COMPLETED</option>
                     <option value="CONFIRMED">CONFIRMED</option>
@@ -446,7 +427,7 @@ export function AdminAppointmentsPage() {
                     value={auditNote}
                     onChange={(e) => setAuditNote(e.target.value)}
                     placeholder="Provide justification for manual override (e.g. 'Patient completed consultation over direct audio failover due to network disconnect')..."
-                    className="w-full bg-slate-50 border border-border text-ink text-xs p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700"
+                    className="w-full bg-slate-50 border border-border text-ink text-xs p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-700 min-h-[80px]"
                     required
                   />
                 </div>
@@ -457,7 +438,7 @@ export function AdminAppointmentsPage() {
                   </p>
                 )}
 
-                <div className="flex items-center justify-end gap-2.5 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-2 pt-2 border-t border-border">
                   <Button
                     type="button"
                     variant="outline"
@@ -466,7 +447,7 @@ export function AdminAppointmentsPage() {
                       setOverrideModalOpen(false);
                       setSelectedAppt(null);
                     }}
-                    className="text-xs"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-0"
                   >
                     Cancel
                   </Button>
@@ -476,15 +457,15 @@ export function AdminAppointmentsPage() {
                     variant="primary"
                     size="sm"
                     loading={overrideMutation.isPending}
-                    className="text-xs font-bold"
+                    className="w-full sm:w-auto min-h-[44px] sm:min-h-0 font-bold"
                   >
                     Apply Status Override
                   </Button>
                 </div>
               </form>
             </div>
-          </div>
-        )}
+          )}
+        </Modal>
       </div>
     </AdminLayout>
   );

@@ -292,13 +292,13 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
 
             {/* 7-Day Pill Bar */}
             {isLoadingAvailability ? (
-              <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+              <div className="flex overflow-x-auto pb-2 scrollbar-none snap-x gap-2 sm:grid sm:grid-cols-7">
                 {Array.from({ length: 7 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 rounded-2xl" />
+                  <Skeleton key={i} className="h-16 min-w-[64px] sm:min-w-0 rounded-2xl shrink-0" />
                 ))}
               </div>
             ) : availability && availability.length > 0 ? (
-              <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+              <div className="flex overflow-x-auto pb-2 scrollbar-none snap-x gap-2 sm:grid sm:grid-cols-7">
                 {availability.slice(0, 7).map((day, idx) => {
                   const isSelected = selectedDateIndex === idx;
                   const dateObj = new Date(day.date);
@@ -317,7 +317,7 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
                         setSelectedSlot(null);
                         setBookingError(null);
                       }}
-                      className={`p-2 rounded-2xl border text-center transition-all flex flex-col items-center justify-between gap-0.5 group cursor-pointer ${
+                      className={`snap-start shrink-0 min-w-[64px] sm:min-w-0 p-2 sm:p-2.5 rounded-2xl border text-center transition-all flex flex-col items-center justify-between gap-1 group cursor-pointer ${
                         isSelected
                           ? "bg-teal-800 text-white border-teal-800 shadow-md scale-102"
                           : "bg-white border-slate-200 text-slate-700 hover:border-teal-400 hover:shadow-2xs"
@@ -453,14 +453,15 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
                   />
                 </div>
 
-                <div className="flex items-center justify-between pt-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-1">
                   <div className="flex items-center gap-1 text-[11px] text-teal-800 font-medium">
-                    <ShieldCheck size={14} className="text-teal-700" />
+                    <ShieldCheck size={14} className="text-teal-700 shrink-0" />
                     <span>Instant digital booking reference</span>
                   </div>
                   <Button
                     variant="primary"
                     size="md"
+                    className="w-full sm:w-auto min-h-[44px]"
                     iconRight={ChevronRight}
                     isLoading={bookMutation.isPending}
                     onClick={handleConfirmBooking}

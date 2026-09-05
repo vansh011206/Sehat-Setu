@@ -228,12 +228,18 @@ class NotificationService:
             action_url=f"http://localhost:5173/appointments",
         )
 
+        doc_display_name = (
+            doctor_user.full_name
+            if doctor_user.full_name.startswith("Dr.")
+            else f"Dr. {doctor_user.full_name}"
+        )
+
         # 2. Notify Patient
         cls.create_notification(
             recipient=patient_user,
             actor=doctor_user,
             title="Appointment Request Received",
-            message=f"Your consultation with Dr. {doctor_user.full_name} for {date_str} at {time_str} is booked.",
+            message=f"Your consultation with {doc_display_name} for {date_str} at {time_str} is booked.",
             notification_type=Notification.Type.APPOINTMENT_CONFIRMED,
             icon="calendar-check",
             data={
@@ -245,7 +251,7 @@ class NotificationService:
             email_subject=f"Appointment Confirmation - {appointment.booking_code}",
             email_headline="Consultation Confirmed",
             email_meta={
-                "Doctor": f"Dr. {doctor_user.full_name}",
+                "Doctor": doc_display_name,
                 "Date": date_str,
                 "Time": time_str,
                 "Booking Code": appointment.booking_code,

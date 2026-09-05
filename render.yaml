@@ -14,7 +14,7 @@ services:
     plan: free
     rootDir: backend
     buildCommand: "./build.sh"
-    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
     envVars:
       - key: DATABASE_URL
         fromDatabase:

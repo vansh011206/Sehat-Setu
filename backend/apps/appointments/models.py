@@ -81,10 +81,10 @@ class AvailabilityRule(models.Model):
             end_mins = self.end_time.hour * 60 + self.end_time.minute
             window = end_mins - start_mins
 
-            if window % self.slot_duration != 0:
+            if window < self.slot_duration:
                 raise ValidationError(
                     {
-                        "slot_duration": f"Total availability window ({window} mins) must be evenly divisible by slot duration ({self.slot_duration} mins)."
+                        "end_time": f"Total availability window ({window} mins) must be at least one slot duration ({self.slot_duration} mins)."
                     }
                 )
 

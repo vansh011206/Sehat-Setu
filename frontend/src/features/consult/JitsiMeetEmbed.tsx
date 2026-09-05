@@ -109,6 +109,28 @@ export function JitsiMeetEmbed({
 
       apiRef.current = api;
 
+      // LAN demo: Ensure iframe has camera, mic, display-capture, fullscreen permissions & origin referrerPolicy
+      const applyIframeAttrs = () => {
+        try {
+          const iframe = typeof api.getIFrame === "function" ? api.getIFrame() : null;
+          if (iframe) {
+            iframe.setAttribute("allow", "camera; microphone; display-capture; fullscreen; autoplay");
+            iframe.setAttribute("referrerpolicy", "origin");
+          }
+          if (containerRef.current) {
+            const iframes = containerRef.current.querySelectorAll("iframe");
+            iframes.forEach((ifr) => {
+              ifr.setAttribute("allow", "camera; microphone; display-capture; fullscreen; autoplay");
+              ifr.setAttribute("referrerpolicy", "origin");
+            });
+          }
+        } catch {
+          // ignore inspection errors
+        }
+      };
+      applyIframeAttrs();
+      setTimeout(applyIframeAttrs, 300);
+
       if (onReadyToClose) {
         api.addListener("readyToClose", onReadyToClose);
       }

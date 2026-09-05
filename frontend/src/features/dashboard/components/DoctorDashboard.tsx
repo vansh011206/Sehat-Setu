@@ -323,79 +323,79 @@ export function DoctorDashboard() {
         </div>
       )}
 
-      {/* ─── Stat Cards Row (4 Responsive Columns) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ─── Stat Cards Row (2x2 on mobile, 4 Columns on lg) ─── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="bg-white p-5 rounded-2xl border border-border shadow-xs space-y-3"
+              className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs space-y-2 sm:space-y-3"
             >
-              <div className="flex items-center gap-3">
-                <Skeleton variant="circle" className="w-12 h-12" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="w-20 h-3" />
-                  <Skeleton className="w-12 h-6" />
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <Skeleton variant="circle" className="w-9 h-9 sm:w-12 sm:h-12" />
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <Skeleton className="w-16 h-3" />
+                  <Skeleton className="w-10 h-5" />
                 </div>
               </div>
             </div>
           ))
         ) : (
           <>
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-teal-300">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
-                <Calendar size={22} className="text-teal-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-teal-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
+                <Calendar size={18} className="text-teal-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Today's Schedule
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Today's Slots
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-ink mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-ink mt-0.5 tabular-nums">
                   {data?.today_schedule?.length ?? 0}
                 </h3>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-emerald-300">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={22} className="text-emerald-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-emerald-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={18} className="text-emerald-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Completed Today
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Completed
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-emerald-700 mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-emerald-700 mt-0.5 tabular-nums">
                   {data?.completed_today_count ?? 0}
                 </h3>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-sky-300">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
-                <Users size={22} className="text-sky-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-sky-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
+                <Users size={18} className="text-sky-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Patients Served
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Patients
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-sky-800 mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-sky-800 mt-0.5 tabular-nums">
                   {data?.total_patients_served ?? 0}
                 </h3>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-amber-300">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
-                <Star size={22} className="text-amber-500 fill-amber-500" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-amber-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                <Star size={18} className="text-amber-500 fill-amber-500 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Doctor Rating
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Rating
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-amber-600 mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-amber-600 mt-0.5 tabular-nums">
                   {Number(data?.avg_rating || 0).toFixed(1)}{" "}
-                  <span className="text-xs font-semibold text-muted">
-                    ({data?.rating_count ?? 0} reviews)
+                  <span className="text-[10px] font-semibold text-muted">
+                    ({data?.rating_count ?? 0})
                   </span>
                 </h3>
               </div>
@@ -582,7 +582,7 @@ export function DoctorDashboard() {
         {isLoading ? (
           <Skeleton className="w-full h-72" variant="rect" />
         ) : data?.monthly_appointments && data.monthly_appointments.length > 0 ? (
-          <div className="w-full h-80">
+          <div className="w-full h-[220px] sm:h-72 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data.monthly_appointments}

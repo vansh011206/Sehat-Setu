@@ -330,7 +330,8 @@ export function PrescriptionsPage() {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
                   Prescribed Medications (Rx)
                 </h4>
-                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
+                {/* Desktop table */}
+                <div className="hidden sm:block border border-slate-200 rounded-xl overflow-x-auto shadow-2xs">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-teal-800 text-white font-bold">
                       <tr>
@@ -359,6 +360,42 @@ export function PrescriptionsPage() {
                     </tbody>
                   </table>
                 </div>
+
+                {/* Mobile stacked card list */}
+                <div className="sm:hidden space-y-2">
+                  {selectedPrescription.medicines?.map((m, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-slate-50 border border-slate-200 p-3 rounded-xl text-xs space-y-2"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 text-sm">{m.name}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800">
+                          Rx #{idx + 1}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-1.5 text-[11px] text-slate-600 pt-1 border-t border-slate-200">
+                        <div>
+                          <span className="text-slate-400 block text-[10px]">Dosage</span>
+                          <span className="font-semibold text-slate-800">{m.dosage}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[10px]">Freq</span>
+                          <span className="font-semibold text-slate-800">{m.frequency}</span>
+                        </div>
+                        <div>
+                          <span className="text-slate-400 block text-[10px]">Duration</span>
+                          <span className="font-semibold text-slate-800">{m.duration}</span>
+                        </div>
+                      </div>
+                      {m.instructions && (
+                        <p className="text-[11px] text-slate-500 italic bg-white p-2 rounded-lg border border-slate-100">
+                          Note: {m.instructions}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Advice */}
@@ -382,25 +419,26 @@ export function PrescriptionsPage() {
               )}
 
               {/* Footer Actions */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border">
                 <Link
                   to={`/verify/${selectedPrescription.verification_code}`}
                   target="_blank"
-                  className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1.5"
+                  className="text-xs text-teal-700 hover:text-teal-900 font-bold flex items-center gap-1.5 min-h-[44px] sm:min-h-0"
                 >
                   <ShieldCheck size={14} />
                   Public Verification Link <ExternalLink size={12} />
                 </Link>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   {selectedPrescription.pdf_url && (
                     <a
                       href={selectedPrescription.pdf_url}
                       download={`Prescription_${selectedPrescription.verification_code}.pdf`}
                       target="_blank"
                       rel="noreferrer"
+                      className="flex-1 sm:flex-none"
                     >
-                      <Button variant="primary" size="sm" icon={Download}>
+                      <Button variant="primary" size="sm" icon={Download} className="w-full sm:w-auto min-h-[44px] sm:min-h-0">
                         Download PDF
                       </Button>
                     </a>
@@ -409,6 +447,7 @@ export function PrescriptionsPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setSelectedPrescription(null)}
+                    className="flex-1 sm:flex-none min-h-[44px] sm:min-h-0"
                   >
                     Close
                   </Button>

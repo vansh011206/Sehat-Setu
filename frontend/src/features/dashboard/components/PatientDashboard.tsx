@@ -208,76 +208,76 @@ export function PatientDashboard() {
         </div>
       </div>
 
-      {/* ─── Stat Cards Row (4 Columns Responsive) ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ─── Stat Cards Row (2x2 on mobile, 4 Columns on lg) ─── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="bg-white p-5 rounded-2xl border border-border shadow-xs space-y-3"
+              className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs space-y-2 sm:space-y-3"
             >
-              <div className="flex items-center gap-3">
-                <Skeleton variant="circle" className="w-12 h-12" />
-                <div className="space-y-2 flex-1">
-                  <Skeleton className="w-20 h-3" />
-                  <Skeleton className="w-12 h-6" />
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <Skeleton variant="circle" className="w-9 h-9 sm:w-12 sm:h-12" />
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <Skeleton className="w-16 h-3" />
+                  <Skeleton className="w-10 h-5" />
                 </div>
               </div>
             </div>
           ))
         ) : (
           <>
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-teal-300">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
-                <Calendar size={22} className="text-teal-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-teal-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-teal-50 border border-teal-200 flex items-center justify-center shrink-0">
+                <Calendar size={18} className="text-teal-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
                   Total Bookings
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-ink mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-ink mt-0.5 tabular-nums">
                   {data?.stats?.total_appointments ?? 0}
                 </h3>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-emerald-300">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
-                <CheckCircle2 size={22} className="text-emerald-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-emerald-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center shrink-0">
+                <CheckCircle2 size={18} className="text-emerald-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Completed Visits
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Completed
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-emerald-700 mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-emerald-700 mt-0.5 tabular-nums">
                   {data?.stats?.completed_count ?? 0}
                 </h3>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-rose-300">
-              <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
-                <XCircle size={22} className="text-rose-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-rose-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center shrink-0">
+                <XCircle size={18} className="text-rose-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Cancelled / Missed
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Cancelled
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-slate-700 mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-slate-700 mt-0.5 tabular-nums">
                   {data?.stats?.cancelled_count ?? 0}
                 </h3>
               </div>
             </div>
 
-            <div className="bg-white p-5 rounded-2xl border border-border shadow-xs flex items-center gap-4 transition-all hover:border-sky-300">
-              <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
-                <FileText size={22} className="text-sky-700" />
+            <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-border shadow-xs flex items-center gap-2.5 sm:gap-4 transition-all hover:border-sky-300">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-center shrink-0">
+                <FileText size={18} className="text-sky-700 sm:w-[22px] sm:h-[22px]" />
               </div>
-              <div>
-                <p className="text-xs font-bold text-muted uppercase tracking-wider">
-                  Digital Prescriptions
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
+                  Digital Rx
                 </p>
-                <h3 className="text-2xl font-extrabold font-heading text-sky-800 mt-0.5 tabular-nums">
+                <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-sky-800 mt-0.5 tabular-nums">
                   {data?.stats?.prescriptions_count ?? 0}
                 </h3>
               </div>

@@ -410,7 +410,7 @@ export function RegisterPage() {
               value={form.qualification}
               onChange={(e) => updateField("qualification", e.target.value)}
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 label="Years of Experience"
                 placeholder="e.g., 10"
@@ -450,17 +450,17 @@ export function RegisterPage() {
               onChange={(e) => updateField("clinic_name", e.target.value)}
             />
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <Button
                 variant="outline"
-                className="flex-1"
+                className="w-full sm:w-auto min-h-[44px]"
                 onClick={() => setStep(1)}
                 icon={ArrowLeft}
               >
                 Back
               </Button>
               <Button
-                className="flex-1"
+                className="flex-1 min-h-[44px]"
                 onClick={handleStep2Submit}
                 loading={registerMutation.isPending}
                 icon={UserPlus}

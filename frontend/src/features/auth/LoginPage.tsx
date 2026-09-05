@@ -50,8 +50,9 @@ export function LoginPage() {
     },
     onError: (err: AxiosError<{ detail?: string }>) => {
       if (!err.response || err.code === "ERR_NETWORK" || err.message?.includes("Network Error")) {
+        const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
         setError(
-          "Backend server is offline or unreachable on http://localhost:8000. Please start the backend server."
+          `Backend server is offline or unreachable on http://${host}:8000. Please ensure the backend is running.`
         );
       } else if (err.response?.status === 429) {
         setError("Too many login attempts. Please wait a few minutes and try again.");
@@ -144,13 +145,13 @@ export function LoginPage() {
             <Zap size={14} className="text-amber-500 fill-amber-500" />
             Quick Demo Login (1-Click Auto Fill)
           </p>
-          <div className="flex gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {DEMO_ACCOUNTS.map((demo) => (
               <Button
                 key={demo.label}
                 variant="outline"
                 size="sm"
-                className="flex-1 text-xs"
+                className="w-full text-xs min-h-[44px]"
                 onClick={() => fillDemo(demo.phone, demo.password)}
               >
                 {demo.label}

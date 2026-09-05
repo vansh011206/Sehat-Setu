@@ -155,13 +155,18 @@ export function DoctorListPage() {
 
           <div className="flex items-center gap-2">
             <Button
-              variant="outline"
+              variant={hasActiveFilters ? "primary" : "outline"}
               size="sm"
               icon={SlidersHorizontal}
-              onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="lg:hidden"
+              onClick={() => setShowMobileFilters(true)}
+              className="lg:hidden min-h-[44px]"
             >
-              Filters {hasActiveFilters && "(Active)"}
+              Filters
+              {hasActiveFilters && (
+                <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white text-teal-900 text-[10px] font-extrabold">
+                  {[selectedCity, selectedRating, selectedMaxFee, selectedSpecialty].filter(Boolean).length}
+                </span>
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -169,6 +174,7 @@ export function DoctorListPage() {
               icon={RefreshCw}
               onClick={() => refetch()}
               loading={isFetching}
+              className="min-h-[44px]"
             >
               Refresh
             </Button>
@@ -221,14 +227,119 @@ export function DoctorListPage() {
           })}
         </div>
 
+        {/* ─── Mobile Filter Bottom Sheet (<lg) ─── */}
+        {showMobileFilters && (
+          <div className="fixed inset-0 z-50 flex items-end lg:hidden">
+            <div
+              className="absolute inset-0 bg-ink/50 backdrop-blur-xs animate-fade-in"
+              onClick={() => setShowMobileFilters(false)}
+            />
+            <div
+              className="relative w-full bg-white rounded-t-3xl max-h-[85dvh] overflow-y-auto p-5 space-y-5 z-10 animate-slide-up shadow-modal"
+              style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 1.25rem)" }}
+            >
+              <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-2 shrink-0" />
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <span className="text-sm font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Filter size={15} className="text-teal-700" /> Filter Directory
+                </span>
+                <div className="flex items-center gap-3">
+                  {hasActiveFilters && (
+                    <button
+                      type="button"
+                      onClick={clearAllFilters}
+                      className="text-xs font-bold text-teal-800 hover:underline cursor-pointer"
+                    >
+                      Clear All
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileFilters(false)}
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"
+                    aria-label="Close filters"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+
+              {/* City select */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 block">Location / City</label>
+                <Select
+                  options={CITIES}
+                  value={selectedCity}
+                  onChange={(e) => updateFilter("city", e.target.value)}
+                />
+              </div>
+
+              {/* Rating Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">Minimum Rating</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "", label: "Any" },
+                    { value: "4.0", label: "4.0+" },
+                    { value: "4.5", label: "4.5+" },
+                  ].map((r) => (
+                    <button
+                      key={r.value}
+                      type="button"
+                      onClick={() => updateFilter("min_rating", r.value || null)}
+                      className={`py-2 text-xs rounded-xl font-bold border transition-all flex items-center justify-center gap-1 min-h-[44px] cursor-pointer ${
+                        selectedRating === r.value
+                          ? "bg-teal-800 text-white border-teal-800 shadow-xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-teal-400"
+                      }`}
+                    >
+                      {r.value && <Star size={12} className="fill-amber-400 text-amber-400" />}
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Max Fee Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">Maximum Fee</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "", label: "Any Price" },
+                    { value: "500", label: "Under ₹500" },
+                    { value: "1000", label: "Under ₹1000" },
+                    { value: "1500", label: "Under ₹1500" },
+                  ].map((f) => (
+                    <button
+                      key={f.value}
+                      type="button"
+                      onClick={() => updateFilter("max_fee", f.value || null)}
+                      className={`py-2 text-xs rounded-xl font-semibold border transition-all min-h-[44px] cursor-pointer ${
+                        selectedMaxFee === f.value
+                          ? "bg-teal-800 text-white border-teal-800 shadow-xs"
+                          : "bg-white text-slate-700 border-slate-200 hover:border-teal-400"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <Button
+                className="w-full min-h-[44px] mt-2"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Apply Filters ({doctors.length} Doctors)
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* ─── Main Content Grid: Sidebar + List ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* ─── Filter Sidebar (Desktop / Collapsible Mobile) ─── */}
-          <div
-            className={`lg:col-span-1 space-y-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs self-start lg:sticky lg:top-24 ${
-              showMobileFilters ? "block" : "hidden lg:block"
-            }`}
-          >
+          {/* ─── Filter Sidebar (Desktop Sticky) ─── */}
+          <div className="hidden lg:block lg:col-span-1 space-y-6 bg-white p-5 rounded-2xl border border-slate-200 shadow-xs self-start lg:sticky lg:top-24">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <span className="text-xs font-extrabold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
                 <Filter size={14} className="text-teal-700" /> Filter Directory
@@ -459,8 +570,8 @@ export function DoctorListPage() {
                     </div>
 
                     {/* Footer: Fee + Action Buttons */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div>
+                    <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center justify-between sm:block">
                         <span className="text-[10px] uppercase font-bold text-slate-400 block">
                           Consultation Fee
                         </span>
@@ -470,9 +581,9 @@ export function DoctorListPage() {
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Link to={`/doctors/${doc.id}`}>
-                          <Button variant="outline" size="sm">
+                      <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
+                        <Link to={`/doctors/${doc.id}`} className="w-full sm:w-auto">
+                          <Button variant="outline" size="sm" className="w-full min-h-[44px]">
                             Profile
                           </Button>
                         </Link>
@@ -481,6 +592,7 @@ export function DoctorListPage() {
                           size="sm"
                           icon={Calendar}
                           onClick={() => setBookingDoctor(doc)}
+                          className="w-full sm:w-auto min-h-[44px]"
                         >
                           Book Slot
                         </Button>

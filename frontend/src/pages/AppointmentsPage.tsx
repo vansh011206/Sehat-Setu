@@ -139,10 +139,10 @@ export function AppointmentsPage() {
           </div>
         </div>
 
-        {/* Tab Strip */}
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+        {/* Tab Strip: horizontal snap on mobile */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none snap-x border-b border-slate-200">
           {[
-            { key: "upcoming", label: "Upcoming Consultations" },
+            { key: "upcoming", label: "Upcoming" },
             { key: "past", label: "Past & Completed" },
             { key: "all", label: "All Appointments" },
           ].map((tab) => (
@@ -150,7 +150,7 @@ export function AppointmentsPage() {
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key as any)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`snap-start px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all min-h-[44px] cursor-pointer ${
                 activeTab === tab.key
                   ? "bg-teal-800 text-white shadow-xs"
                   : "bg-white text-slate-600 border border-slate-200 hover:border-teal-300"
@@ -180,9 +180,9 @@ export function AppointmentsPage() {
               return (
                 <div
                   key={apt.id}
-                  className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:border-teal-300 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-5"
+                  className="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs hover:border-teal-300 hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
                 >
-                  <div className="space-y-3 flex-1">
+                  <div className="space-y-3 flex-1 min-w-0">
                     {/* Top Row: Ref code + Status */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-xs font-extrabold font-heading text-teal-900 bg-teal-50 px-2.5 py-0.5 rounded-lg border border-teal-200">
@@ -196,24 +196,24 @@ export function AppointmentsPage() {
                       <div className="w-10 h-10 rounded-xl bg-teal-800 text-white flex items-center justify-center font-bold text-sm shrink-0">
                         {apt.doctor.name.replace("Dr. ", "").charAt(0)}
                       </div>
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-900">
+                      <div className="min-w-0">
+                        <h3 className="text-sm font-bold text-slate-900 truncate">
                           Dr. {apt.doctor.name}
                         </h3>
-                        <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                          <Stethoscope size={12} className="text-teal-700" />
-                          <span>{apt.doctor.specialty?.name || "Specialist"}</span>
+                        <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 truncate">
+                          <Stethoscope size={12} className="text-teal-700 shrink-0" />
+                          <span className="truncate">{apt.doctor.specialty?.name || "Specialist"}</span>
                           <span>•</span>
-                          <MapPin size={12} className="text-teal-700" />
+                          <MapPin size={12} className="text-teal-700 shrink-0" />
                           <span>{apt.doctor.city}</span>
                         </p>
                       </div>
                     </div>
 
                     {/* Date / Time */}
-                    <div className="flex items-center gap-4 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                       <span className="flex items-center gap-1.5 font-semibold text-slate-800">
-                        <Calendar size={13} className="text-teal-700" />
+                        <Calendar size={13} className="text-teal-700 shrink-0" />
                         {startDate.toLocaleDateString("en-US", {
                           weekday: "short",
                           month: "short",
@@ -222,11 +222,11 @@ export function AppointmentsPage() {
                         })}
                       </span>
                       <span className="flex items-center gap-1.5 font-semibold text-slate-800">
-                        <Clock size={13} className="text-teal-700" />
+                        <Clock size={13} className="text-teal-700 shrink-0" />
                         {startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} -{" "}
                         {endDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
-                      <span className="flex items-center font-extrabold text-teal-900 ml-auto">
+                      <span className="flex items-center font-extrabold text-teal-900">
                         <IndianRupee size={12} />
                         {apt.fee_at_booking}
                       </span>
@@ -240,15 +240,15 @@ export function AppointmentsPage() {
                   </div>
 
                   {/* Right Actions */}
-                  <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0">
+                  <div className="flex items-center justify-end gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0 w-full md:w-auto">
                     {apt.status !== "CANCELLED_BY_PATIENT" &&
                       apt.status !== "CANCELLED_BY_DOCTOR" && (
-                        <Link to={`/consult/${apt.id}`}>
+                        <Link to={`/consult/${apt.id}`} className="w-full sm:w-auto">
                           <Button
                             variant="primary"
                             size="sm"
                             icon={Video}
-                            className="bg-teal-800 hover:bg-teal-900 shadow-xs"
+                            className="bg-teal-800 hover:bg-teal-900 shadow-xs w-full sm:w-auto min-h-[44px]"
                           >
                             Enter Room
                           </Button>

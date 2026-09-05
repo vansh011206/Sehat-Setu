@@ -156,6 +156,93 @@ npm run build      # Builds production bundle (tsc -b && vite build)
 
 ---
 
+## 📶 Local WiFi (LAN) Demo Testing (Multi-Device Laptop + Phone)
+
+Test real-time telehealth video consultations and push notifications across two physical devices (e.g., **Doctor on Laptop** + **Patient on Mobile Phone**) on the same home Wi-Fi network without third-party tunnels or external services.
+
+### 1. Step-by-Step Execution
+
+#### Step A: Run LAN Seed Command
+```bash
+cd backend
+python manage.py lan_demo
+```
+This command auto-detects your local machine's LAN IP and outputs the exact URLs and credentials:
+- **LAN IP Detected**: e.g., `192.168.29.246`
+- **Health Check**: `http://<lan-ip>:8000/api/v1/health/`
+- **Web App**: `http://<lan-ip>:5173`
+- **Doctor (Laptop)**: `9999900001` / `Demo@1234` (Dr. Aarti Sharma, Cardiologist)
+- **Patient (Phone)**: `9999900002` / `Demo@1234` (Rahul Verma)
+- **Instant Video Appointment**: Code `LAN-VIDEO-1` scheduled for immediate testing.
+
+#### Step B: Start Backend (Daphne ASGI on 0.0.0.0)
+```bash
+cd backend
+python manage.py runserver 0.0.0.0:8000
+```
+> [!NOTE]
+> Daphne automatically serves both HTTP REST endpoints and Channels WebSockets over `0.0.0.0:8000`.
+
+#### Step C: Start Frontend (Vite on 0.0.0.0)
+```bash
+cd frontend
+npm run dev
+```
+> [!NOTE]
+> Vite automatically listens on `0.0.0.0:5173` (`server.host = true` in `vite.config.ts`). The top navbar will display a green **LAN MODE** indicator with your machine's IP whenever accessed via local network.
+
+---
+
+### 2. Finding Your Machine IP
+
+- **Windows (PowerShell/CMD)**:
+  ```powershell
+  ipconfig
+  ```
+  Look for **IPv4 Address** under `Wireless LAN adapter Wi-Fi` (e.g. `192.168.1.X` or `192.168.29.X`).
+- **macOS / Linux**:
+  ```bash
+  ip addr show   # Linux
+  ifconfig en0   # macOS
+  ```
+  Look for the `inet` address assigned to your Wi-Fi interface.
+
+---
+
+### 3. Windows Firewall Configuration
+
+If your mobile phone cannot load `http://<lan-ip>:5173` or API calls return network errors, Windows Defender Firewall may be blocking incoming connections. Run PowerShell as **Administrator** and execute:
+
+```powershell
+netsh advfirewall firewall add rule name="SehatSetu Backend 8000" dir=in action=allow protocol=TCP localport=8000
+netsh advfirewall firewall add rule name="SehatSetu Frontend 5173" dir=in action=allow protocol=TCP localport=5173
+```
+
+---
+
+### 4. Mobile Camera & Microphone Note (HTTPS Fallback)
+
+Mobile browsers (Safari on iOS and Chrome on Android) strictly require a secure origin (`HTTPS` or `localhost`) to grant hardware camera and microphone access via `navigator.mediaDevices.getUserMedia`.
+
+To ensure seamless multi-device video calls on local Wi-Fi:
+1. Both devices enter the consultation room.
+2. The UI features a dedicated **"Open in Jitsi"** fallback button in both the header and the video stage.
+3. Clicking **"Open in Jitsi"** opens `https://meet.jit.si/SehatSetu-{room_name}` in a new tab over native HTTPS, allowing phone browsers to access the hardware camera and mic without self-signed certificate warnings.
+
+---
+
+### 5. Troubleshooting Table
+
+| Issue | Root Cause | Solution |
+|---|---|---|
+| **Phone cannot open `http://<lan-ip>:5173`** | Windows Firewall blocking port 5173, or phone is on mobile data instead of home Wi-Fi. | Connect phone to the exact same Wi-Fi SSID as laptop; run the `netsh advfirewall` command above. |
+| **API calls fail with "Network Error"** | Backend running on `127.0.0.1` instead of `0.0.0.0`, or port 8000 is blocked. | Start backend with `python manage.py runserver 0.0.0.0:8000` and ensure port 8000 firewall rule is active. |
+| **WebSocket disconnects on phone** | WebSocket trying to connect to `localhost`. | Already solved: `getWsBaseUrl()` dynamically resolves to `ws://<lan-ip>:8000/ws`. Verify Daphne is active. |
+| **Camera/mic disabled in mobile iframe** | Mobile browser security restricts HTTP iframe WebRTC access. | Tap the **"Open in Jitsi"** button to open the secure HTTPS Jitsi room directly in a new tab. |
+| **Severe audio howling / feedback** | Both laptop and phone are active in the same room. | Mute the microphone on one device, or plug headphones into at least one device during testing. |
+
+---
+
 ## 🐳 Production Deployment with Docker Compose
 
 To build and run the complete production stack (PostgreSQL 16, Redis 7, Django ASGI/Daphne, Celery Worker, Celery Beat, and Nginx SPA proxy):

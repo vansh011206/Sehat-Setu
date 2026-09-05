@@ -9,3 +9,4 @@ export { EmptyState } from "./EmptyState";
 export { Avatar } from "./Avatar";
 export { Breadcrumbs } from "./Breadcrumbs";
 export { ToastProvider, useToast } from "./Toast";
+export { ResponsiveTable, type Column } from "./ResponsiveTable";

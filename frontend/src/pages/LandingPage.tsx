@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
+import { LanModeBadge } from "../components/LanModeBadge";
 
 const FEATURES = [
   {
@@ -95,6 +96,8 @@ export function LandingPage() {
             </span>
           </Link>
           <div className="flex items-center gap-2">
+            {/* LAN demo: LAN Mode indicator */}
+            <LanModeBadge />
             <Link
               to="/login"
               className="px-4 py-2 text-sm font-medium text-primary-900 hover:bg-primary-100 rounded-lg transition-colors"
@@ -109,30 +112,30 @@ export function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-4">
+      <section className="pt-28 sm:pt-36 pb-16 sm:pb-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-100 text-primary-900 text-sm font-semibold mb-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary-100 text-primary-900 text-xs sm:text-sm font-semibold mb-4 sm:mb-6">
             <Activity size={16} />
             Trusted by 10,000+ patients across India
           </div>
-          <h1 className="text-4xl md:text-6xl font-extrabold font-heading text-ink leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-ink leading-tight mb-4 sm:mb-6">
             Your Health,
             <br />
             <span className="text-gradient">One Click Away</span>
           </h1>
-          <p className="text-lg text-muted max-w-2xl mx-auto mb-8 leading-relaxed">
+          <p className="text-base sm:text-lg text-muted max-w-2xl mx-auto mb-6 sm:mb-8 leading-relaxed">
             Book appointments with verified doctors, consult via video, and manage
             your entire health journey — all from one platform built for modern
             India.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/register">
-              <Button size="lg" iconRight={ArrowRight}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 max-w-xs sm:max-w-none mx-auto">
+            <Link to="/register" className="w-full sm:w-auto">
+              <Button size="lg" className="w-full sm:w-auto" iconRight={ArrowRight}>
                 Book an Appointment
               </Button>
             </Link>
-            <Link to="/doctors">
-              <Button variant="outline" size="lg" icon={Search}>
+            <Link to="/doctors" className="w-full sm:w-auto">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto" icon={Search}>
                 Find a Doctor
               </Button>
             </Link>
@@ -141,27 +144,27 @@ export function LandingPage() {
       </section>
 
       {/* Feature Cards */}
-      <section className="py-20 px-4 bg-white">
+      <section className="py-14 sm:py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold font-heading text-ink mb-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold font-heading text-ink mb-2 sm:mb-3">
               Healthcare, Simplified
             </h2>
-            <p className="text-muted max-w-xl mx-auto">
+            <p className="text-sm sm:text-base text-muted max-w-xl mx-auto">
               Everything you need for a seamless healthcare experience, all in one
               place.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {FEATURES.map((feature) => (
-              <Card key={feature.title} hover className="p-8 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mx-auto mb-5">
-                  <feature.icon size={26} className="text-primary-900" />
+              <Card key={feature.title} hover className="p-6 sm:p-8 text-center">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary-100 flex items-center justify-center mx-auto mb-4 sm:mb-5">
+                  <feature.icon size={24} className="text-primary-900" />
                 </div>
-                <h3 className="text-lg font-bold font-heading text-ink mb-2">
+                <h3 className="text-base sm:text-lg font-bold font-heading text-ink mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-sm text-muted leading-relaxed">
+                <p className="text-xs sm:text-sm text-muted leading-relaxed">
                   {feature.description}
                 </p>
               </Card>
@@ -171,29 +174,29 @@ export function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 px-4">
+      <section className="py-14 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold font-heading text-ink mb-3">
+          <div className="text-center mb-8 sm:mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold font-heading text-ink mb-2 sm:mb-3">
               How It Works
             </h2>
-            <p className="text-muted max-w-xl mx-auto">
+            <p className="text-sm sm:text-base text-muted max-w-xl mx-auto">
               Get from search to prescription in four simple steps.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {STEPS.map((s) => (
-              <div key={s.step} className="relative text-center group">
-                <div className="text-5xl font-extrabold font-heading text-primary-100 mb-3 tabular-nums">
+              <div key={s.step} className="relative text-center group p-3">
+                <div className="text-4xl sm:text-5xl font-extrabold font-heading text-primary-100 mb-2 sm:mb-3 tabular-nums">
                   {s.step}
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-primary-900 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <s.icon size={22} className="text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-primary-900 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                  <s.icon size={20} className="text-white" />
                 </div>
-                <h3 className="text-base font-bold font-heading text-ink mb-1">
+                <h3 className="text-sm sm:text-base font-bold font-heading text-ink mb-1">
                   {s.title}
                 </h3>
-                <p className="text-sm text-muted">{s.description}</p>
+                <p className="text-xs text-muted">{s.description}</p>
               </div>
             ))}
           </div>
@@ -201,22 +204,23 @@ export function LandingPage() {
       </section>
 
       {/* Specialty Chips */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-12 sm:py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold font-heading text-ink mb-2">
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold font-heading text-ink mb-1.5">
               Browse by Specialty
             </h2>
-            <p className="text-sm text-muted">
+            <p className="text-xs sm:text-sm text-muted">
               Find the right specialist for your needs
             </p>
           </div>
-          <div className="flex flex-wrap justify-center gap-3">
+          {/* mobile: horizontal snap scroll on mobile, flex-wrap on tablet/desktop */}
+          <div className="flex sm:flex-wrap overflow-x-auto sm:overflow-visible snap-x sm:snap-none scrollbar-none justify-start sm:justify-center gap-2.5 pb-2 sm:pb-0 px-1">
             {SPECIALTIES.map((spec) => (
               <Link
                 key={spec.name}
                 to="/doctors"
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full border border-border bg-surface text-sm font-medium text-ink hover:border-primary-500 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200"
+                className="snap-start shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-full border border-border bg-surface text-xs sm:text-sm font-medium text-ink hover:border-primary-500 hover:bg-primary-50 hover:text-primary-900 transition-all duration-200 min-h-[44px]"
               >
                 <spec.icon size={16} />
                 {spec.name}
@@ -227,21 +231,21 @@ export function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-4">
+      <section className="py-14 sm:py-20 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="rounded-3xl bg-gradient-to-br from-primary-900 to-primary-500 p-12 text-white">
-            <h2 className="text-3xl font-bold font-heading mb-3">
+          <div className="rounded-3xl bg-gradient-to-br from-primary-900 to-primary-500 p-6 sm:p-12 text-white">
+            <h2 className="text-2xl sm:text-3xl font-bold font-heading mb-2 sm:mb-3">
               Ready to Take Control of Your Health?
             </h2>
-            <p className="text-primary-100 mb-8 max-w-lg mx-auto">
+            <p className="text-xs sm:text-sm text-primary-100 mb-6 sm:mb-8 max-w-lg mx-auto">
               Join thousands of patients and doctors who trust SehatSetu for
               seamless clinic bookings and telehealth consultations.
             </p>
-            <Link to="/register">
+            <Link to="/register" className="inline-block w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white/10"
+                className="w-full sm:w-auto border-white text-white hover:bg-white/10"
                 iconRight={ArrowRight}
               >
                 Create Free Account

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "../../components/ui/Toast";
 import { useAuthStore } from "../../stores/authStore";
+import { getWsBaseUrl } from "../../api/client";
 import type { NotificationItem } from "./api";
 
 export function useNotificationsWebSocket() {
@@ -23,9 +24,8 @@ export function useNotificationsWebSocket() {
       return;
     }
 
-    const host = window.location.hostname || "localhost";
-    const port = 8000;
-    const wsUrl = `ws://${host}:${port}/ws/notifications/?token=${encodeURIComponent(accessToken)}`;
+    // LAN demo: Use dynamic WebSocket helper
+    const wsUrl = `${getWsBaseUrl("/notifications/")}?token=${encodeURIComponent(accessToken)}`;
 
     try {
       if (wsRef.current) {

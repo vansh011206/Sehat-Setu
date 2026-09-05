@@ -7,15 +7,48 @@
 
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1";
+// LAN demo: Derive API and WebSocket URLs dynamically at runtime from window.location
+export function getApiBaseUrl(): string {
+  const host = typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "localhost";
+  const protocol = typeof window !== "undefined" && window.location.protocol ? window.location.protocol : "http:";
+
+  if (import.meta.env.VITE_API_URL) {
+    const envUrl = import.meta.env.VITE_API_URL;
+    // If accessing via LAN host (phone) but env has localhost, adapt localhost to current host IP
+    if (host !== "localhost" && host !== "127.0.0.1" && (envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
+      return envUrl.replace(/localhost|127\.0\.0\.1/, host);
+    }
+    return envUrl;
+  }
+  return `${protocol}//${host}:8000/api/v1`;
+}
+
+export function getWsBaseUrl(path: string = ""): string {
+  const host = typeof window !== "undefined" && window.location.hostname ? window.location.hostname : "localhost";
+  const protocol = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
+  const cleanPath = path ? (path.startsWith("/") ? path : `/${path}`) : "";
+
+  if (import.meta.env.VITE_WS_URL) {
+    let base = import.meta.env.VITE_WS_URL.replace(/\/+$/, "");
+    if (host !== "localhost" && host !== "127.0.0.1" && (base.includes("localhost") || base.includes("127.0.0.1"))) {
+      base = base.replace(/localhost|127\.0\.0\.1/, host);
+    }
+    return `${base}${cleanPath}`;
+  }
+  return `${protocol}//${host}:8000/ws${cleanPath}`;
+}
+
+export const API_URL = getApiBaseUrl();
 
 const client = axios.create({
   baseURL: API_URL,
   headers: { "Content-Type": "application/json" },
 });
 
-// ── Request interceptor: attach token ──
+// ── Request interceptor: attach token & ensure dynamic baseURL ──
 client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+  // Ensure baseURL is dynamically set based on active window hostname
+  config.baseURL = getApiBaseUrl();
   const token = localStorage.getItem("access_token");
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;

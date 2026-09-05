@@ -66,10 +66,31 @@
   box-sizing: border-box;
 }
 
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
 html {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%; /* mobile: prevent automatic iOS font inflation */
+}
+
+/* mobile: font-size >= 16px on form controls prevents iOS auto-zoom on tap */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* mobile: remove 300ms click delay on touch screens */
+button,
+a {
+  touch-action: manipulation;
 }
 
 body {
@@ -80,6 +101,8 @@ body {
   background-color: var(--color-surface);
   line-height: 1.6;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: clip; /* mobile: safety net preventing accidental viewport blowout */
 }
 
 #root {
@@ -132,3 +155,19 @@ h1, h2, h3, h4, h5, h6 {
 ::-webkit-scrollbar-thumb:hover {
   background-color: var(--color-muted);
 }
+
+/* mobile: horizontal snap lists with hidden scrollbar */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* mobile: WCAG 44x44px minimum touch target size */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
