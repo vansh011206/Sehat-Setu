@@ -38,6 +38,8 @@ class AvailabilityRule(models.Model):
     SLOT_DURATION_CHOICES = (
         (15, "15 Minutes"),
         (30, "30 Minutes"),
+        (45, "45 Minutes"),
+        (60, "60 Minutes"),
     )
 
     doctor = models.ForeignKey(

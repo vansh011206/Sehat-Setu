@@ -13,6 +13,7 @@ import {
   Sun,
   Sunset,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import { Modal } from "../../components/ui/Modal";
 import { Button } from "../../components/ui/Button";
@@ -79,16 +80,18 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [confirmedBookingCode, setConfirmedBookingCode] = useState<string | null>(null);
 
-  // Fetch 7-day doctor availability
+  // Fetch 7-day doctor availability (fresh real-time fetch)
   const {
     data: availability,
     isLoading: isLoadingAvailability,
     refetch: refetchAvailability,
+    isFetching: isFetchingAvailability,
   } = useQuery({
     queryKey: ["doctor-availability", doctor.id],
     queryFn: () => doctorsApi.getAvailability(doctor.id),
     enabled: open,
-    staleTime: 30000,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Mutation to book appointment
@@ -279,15 +282,26 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
         ) : (
           /* ─── SCHEDULE & SLOT SELECTION VIEW ─── */
           <div className="space-y-4">
-            {/* Header with 7-Day Badge */}
+            {/* Header with 7-Day Badge & Refresh Button */}
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                 <Calendar size={13} className="text-teal-700" />
                 Select Consultation Date (Next 7 Days)
               </label>
-              <span className="text-[11px] text-teal-800 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
-                7 Days Available
-              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => refetchAvailability()}
+                  disabled={isFetchingAvailability}
+                  title="Refresh latest doctor slots"
+                  className="p-1 rounded-lg text-slate-400 hover:text-teal-700 hover:bg-teal-50 transition-colors cursor-pointer"
+                >
+                  <RefreshCw size={13} className={isFetchingAvailability ? "animate-spin text-teal-700" : ""} />
+                </button>
+                <span className="text-[11px] text-teal-800 font-semibold bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                  7 Days Available
+                </span>
+              </div>
             </div>
 
             {/* 7-Day Pill Bar */}
@@ -373,6 +387,14 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
                     <p className="font-semibold text-slate-700">No Consultation Slots on this day</p>
                     <p className="text-[11px] text-slate-400">
                       The doctor is not available on this date. Please select another day above.
+                    </p>
+                  </div>
+                ) : activeDay.slots.every((s) => s.is_past) ? (
+                  <div className="p-6 text-center bg-amber-50/60 rounded-2xl border border-dashed border-amber-200 text-slate-600 text-xs space-y-1">
+                    <Clock size={20} className="mx-auto text-amber-600" />
+                    <p className="font-bold text-slate-800">Today's Clinic Working Hours Have Ended</p>
+                    <p className="text-[11px] text-slate-500">
+                      All consultation slots for today have already passed. Please select tomorrow or an upcoming date above to view and book open slots.
                     </p>
                   </div>
                 ) : (

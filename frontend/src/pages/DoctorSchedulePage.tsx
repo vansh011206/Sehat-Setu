@@ -349,6 +349,19 @@ export function DoctorSchedulePage() {
               );
             })}
           </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button
+              variant="primary"
+              size="md"
+              icon={Save}
+              isLoading={saveRulesMutation.isPending}
+              onClick={handleSaveSchedule}
+              className="w-full sm:w-auto min-h-[44px] font-bold"
+            >
+              Save Weekly Schedule
+            </Button>
+          </div>
         </div>
 
         {/* ─── 2. Today's Patient Appointments Queue ─── */}
