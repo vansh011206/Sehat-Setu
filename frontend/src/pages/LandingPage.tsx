@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
-import { LanModeBadge } from "../components/LanModeBadge";
 
 const FEATURES = [
   {
@@ -95,17 +94,15 @@ export function LandingPage() {
               Sehat<span className="text-primary-900">Setu</span>
             </span>
           </Link>
-          <div className="flex items-center gap-2">
-            {/* LAN demo: LAN Mode indicator */}
-            <LanModeBadge />
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Link
               to="/login"
-              className="px-4 py-2 text-sm font-medium text-primary-900 hover:bg-primary-100 rounded-lg transition-colors"
+              className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:text-teal-800 rounded-xl hover:bg-slate-100 transition-colors"
             >
               Sign In
             </Link>
             <Link to="/register">
-              <Button size="sm">Get Started</Button>
+              <Button size="sm" className="font-bold text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl">Get Started</Button>
             </Link>
           </div>
         </div>

@@ -46,10 +46,10 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Mobile Bottom Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-md border-t border-border shadow-lg"
-      style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 0px)" }}
+      className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/92 backdrop-blur-xl border-t border-slate-200/80 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] transition-all"
+      style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 6px)" }}
     >
-      <div className="grid grid-cols-5 h-16 max-w-lg mx-auto">
+      <div className="grid grid-cols-5 h-[58px] max-w-md mx-auto items-center px-1">
         {items.map((item) => {
           const Icon = item.icon;
           return (
@@ -57,23 +57,29 @@ export function BottomNav() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-1 transition-colors min-h-[44px] cursor-pointer ${
+                `flex flex-col items-center justify-center gap-0.5 transition-all duration-200 min-h-[44px] cursor-pointer group active:scale-95 ${
                   isActive
-                    ? "text-teal-800 font-bold"
-                    : "text-slate-500 hover:text-slate-800 font-medium"
+                    ? "text-teal-800"
+                    : "text-slate-400 hover:text-slate-600"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
                   <div
-                    className={`p-1 rounded-xl transition-all ${
-                      isActive ? "bg-teal-50 text-teal-800" : ""
+                    className={`p-1.5 rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? "bg-teal-800 text-white shadow-xs scale-105"
+                        : "text-slate-500 group-hover:text-slate-800"
                     }`}
                   >
-                    <Icon size={20} strokeWidth={isActive ? 2.3 : 1.8} />
+                    <Icon size={18} strokeWidth={isActive ? 2.4 : 1.8} />
                   </div>
-                  <span className="text-[10px] leading-none tracking-tight">
+                  <span
+                    className={`text-[10px] tracking-tight transition-colors ${
+                      isActive ? "font-bold text-teal-800" : "font-medium text-slate-500"
+                    }`}
+                  >
                     {item.label}
                   </span>
                 </>
@@ -85,3 +91,5 @@ export function BottomNav() {
     </nav>
   );
 }
+
+export default BottomNav;

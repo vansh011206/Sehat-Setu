@@ -24,11 +24,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col lg:pl-64">
         {/* Top Navbar */}
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-lg border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-30 h-14 sm:h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-3 sm:px-6 lg:px-8 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-ink hover:bg-slate-100 transition-colors"
+              className="lg:hidden p-1.5 rounded-xl text-slate-600 hover:text-ink hover:bg-slate-100 transition-colors"
               aria-label="Open navigation menu"
             >
               <Menu size={20} />
@@ -43,19 +43,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               </span>
             </Link>
 
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 shadow-2xs">
-              <ShieldCheck size={14} className="text-teal-700" />
-              <span>Admin Console</span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-teal-50 text-teal-800 border border-teal-200 shadow-2xs">
+              <ShieldCheck size={13} className="text-teal-700" />
+              <span className="hidden xs:inline">Admin Console</span>
+              <span className="xs:hidden">Admin</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               to="/dashboard"
-              className="text-xs font-semibold text-slate-500 hover:text-teal-800 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100"
+              className="text-xs font-semibold text-slate-500 hover:text-teal-800 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100 shrink-0"
             >
               <ArrowLeft size={13} />
-              <span>General Dashboard</span>
+              <span className="hidden sm:inline">General Dashboard</span>
+              <span className="sm:hidden">Exit</span>
             </Link>
 
             {/* Notification Bell */}

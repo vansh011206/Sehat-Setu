@@ -17,7 +17,7 @@ export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
     <div className="min-h-screen min-h-dvh bg-slate-50 flex flex-col">
       <Navbar onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-      <div className="flex flex-1 pt-16 min-w-0">
+      <div className="flex flex-1 pt-14 sm:pt-16 min-w-0">
         {/* Sidebar (Desktop visible, mobile drawer when toggled) */}
         {showSidebar && (
           <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
