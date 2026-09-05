@@ -41,6 +41,10 @@ def health_check(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Root aliases (if client omitted /api/v1)
+    path("health/", health_check),
+    path("specialties/", SpecialtyListView.as_view()),
+    path("auth/", include(("apps.accounts.urls", "accounts"), namespace="root-accounts")),
     # Health endpoint
     path("api/v1/health/", health_check, name="health-check"),
     # Direct Specialties alias

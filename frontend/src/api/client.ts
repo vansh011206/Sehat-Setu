@@ -13,10 +13,14 @@ export function getApiBaseUrl(): string {
   const protocol = typeof window !== "undefined" && window.location.protocol ? window.location.protocol : "http:";
 
   if (import.meta.env.VITE_API_URL) {
-    const envUrl = import.meta.env.VITE_API_URL;
+    let envUrl = import.meta.env.VITE_API_URL.replace(/\/+$/, "");
     // If accessing via LAN host (phone) but env has localhost, adapt localhost to current host IP
     if (host !== "localhost" && host !== "127.0.0.1" && (envUrl.includes("localhost") || envUrl.includes("127.0.0.1"))) {
-      return envUrl.replace(/localhost|127\.0\.0\.1/, host);
+      envUrl = envUrl.replace(/localhost|127\.0\.0\.1/, host);
+    }
+    // Auto-append /api/v1 if the user omitted it in Vercel environment variables
+    if (!envUrl.endsWith("/api/v1")) {
+      envUrl = `${envUrl}/api/v1`;
     }
     return envUrl;
   }
@@ -32,6 +36,9 @@ export function getWsBaseUrl(path: string = ""): string {
     let base = import.meta.env.VITE_WS_URL.replace(/\/+$/, "");
     if (host !== "localhost" && host !== "127.0.0.1" && (base.includes("localhost") || base.includes("127.0.0.1"))) {
       base = base.replace(/localhost|127\.0\.0\.1/, host);
+    }
+    if (!base.endsWith("/ws")) {
+      base = `${base}/ws`;
     }
     return `${base}${cleanPath}`;
   }
