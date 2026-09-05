@@ -20,4 +20,10 @@ python manage.py migrate --no-input
 echo "==> Seeding specialties..."
 python manage.py seed_specialties || echo "Seed command not found or already seeded, skipping..."
 
+echo "==> Seeding demo users..."
+python manage.py seed_users || echo "Seed users skipped..."
+
+echo "==> Seeding LAN demo users..."
+python manage.py lan_demo || echo "LAN demo skipped..."
+
 echo "==> Build complete!"
