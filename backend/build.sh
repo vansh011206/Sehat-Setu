@@ -4,6 +4,9 @@
 
 set -o errexit  # exit on error
 
+echo "==> Upgrading pip..."
+pip install --upgrade pip
+
 echo "==> Installing Python dependencies..."
 pip install -r requirements.txt
 pip install gunicorn whitenoise dj-database-url
