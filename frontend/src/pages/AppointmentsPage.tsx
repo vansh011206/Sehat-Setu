@@ -259,7 +259,7 @@ export function AppointmentsPage() {
                             className="border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100 font-bold w-full sm:w-auto min-h-[44px]"
                             title="View or update your consultation review"
                           >
-                            Rated ★ {Number(apt.patient_review.rating).toFixed(1)}
+                            Rated {Number(apt.patient_review.rating).toFixed(1)}/5
                           </Button>
                         ) : (
                           <Button

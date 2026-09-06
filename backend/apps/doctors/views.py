@@ -247,16 +247,13 @@ class DoctorReviewsListCreateView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # 2. Check if already reviewed: update existing review instead of 409 conflict
-        existing_review = Review.objects.filter(doctor=doctor, patient=request.user).first()
-        if existing_review:
-            serializer = CreateReviewSerializer(existing_review, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            review = serializer.save()
-            doctor.update_rating_stats()
+        # 2. Check if already reviewed (One review per patient per doctor)
+        if Review.objects.filter(doctor=doctor, patient=request.user).exists():
             return Response(
-                ReviewSerializer(review, context={"request": request}).data,
-                status=status.HTTP_200_OK,
+                {
+                    "detail": "You have already submitted a review for this doctor."
+                },
+                status=status.HTTP_409_CONFLICT,
             )
 
         serializer = CreateReviewSerializer(data=request.data)
