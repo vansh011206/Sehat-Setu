@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   AlertCircle,
   CheckCircle2,
+  CalendarCheck2,
   Sunrise,
   Sun,
   Sunset,
@@ -22,7 +23,7 @@ import { Avatar } from "../../components/ui/Avatar";
 import { useToast } from "../../components/ui/Toast";
 import { useAuthStore } from "../../stores/authStore";
 import { doctorsApi } from "../doctors/api";
-import { bookingsApi } from "./api";
+import { bookingsApi, type Appointment } from "./api";
 
 interface BookingModalProps {
   open: boolean;
@@ -65,6 +66,41 @@ function formatDateDisplay(dateStr: string): string {
   }
 }
 
+function formatFullAppointmentDate(dateString: string): string {
+  try {
+    const d = new Date(dateString);
+    return d.toLocaleDateString("en-IN", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return dateString;
+  }
+}
+
+function formatAppointmentTimeRange(startStr: string, endStr?: string): string {
+  try {
+    const start = new Date(startStr);
+    const startFormatted = start.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    if (!endStr) return startFormatted;
+    const end = new Date(endStr);
+    const endFormatted = end.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return `${startFormatted} – ${endFormatted}`;
+  } catch {
+    return startStr;
+  }
+}
+
 export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -78,6 +114,7 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
   } | null>(null);
   const [symptoms, setSymptoms] = useState("");
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<Appointment | null>(null);
   const [confirmedBookingCode, setConfirmedBookingCode] = useState<string | null>(null);
 
   // Fetch 7-day doctor availability (fresh real-time fetch)
@@ -98,6 +135,7 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
   const bookMutation = useMutation({
     mutationFn: bookingsApi.bookAppointment,
     onSuccess: (data) => {
+      setConfirmedBooking(data);
       setConfirmedBookingCode(data.booking_code);
       queryClient.invalidateQueries({ queryKey: ["doctor-availability", doctor.id] });
       queryClient.invalidateQueries({ queryKey: ["appointments", user?.id] });
@@ -178,9 +216,13 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
     setSelectedSlot(null);
     setSymptoms("");
     setBookingError(null);
+    setConfirmedBooking(null);
     setConfirmedBookingCode(null);
     onClose();
   };
+
+  const scheduledStartTime = confirmedBooking?.start_time || selectedSlot?.start_time;
+  const scheduledEndTime = confirmedBooking?.end_time || selectedSlot?.end_time;
 
   return (
     <Modal
@@ -240,6 +282,51 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
               </p>
             </div>
 
+            {/* ─── SCHEDULED TIME & DATE HIGHLIGHT CARD ─── */}
+            {scheduledStartTime && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-white border border-teal-200/90 shadow-xs max-w-sm mx-auto text-left space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 flex items-center gap-1.5">
+                    <CalendarCheck2 size={15} className="text-teal-700" />
+                    Scheduled Consultation
+                  </span>
+                  <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    Confirmed
+                  </span>
+                </div>
+
+                <div className="space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200/70 flex items-center justify-center text-teal-800 shrink-0">
+                      <Calendar size={15} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Date
+                      </span>
+                      <p className="text-sm font-extrabold text-slate-900 font-heading">
+                        {formatFullAppointmentDate(scheduledStartTime)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200/70 flex items-center justify-center text-teal-800 shrink-0">
+                      <Clock size={15} />
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
+                        Time Slot
+                      </span>
+                      <p className="text-sm font-extrabold text-teal-900 font-heading">
+                        {formatAppointmentTimeRange(scheduledStartTime, scheduledEndTime)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Booking Code Card */}
             <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 inline-block max-w-xs mx-auto">
               <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700 block">
@@ -256,13 +343,22 @@ export function BookingModal({ open, onClose, doctor }: BookingModalProps) {
                 size="md"
                 icon={Calendar}
                 onClick={() => {
-                  const text = `Consultation with Dr. ${doctor.name} - Ref: ${confirmedBookingCode}`;
-                  window.open(
-                    `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
-                      text
-                    )}`,
-                    "_blank"
-                  );
+                  let calUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+                    `Consultation with Dr. ${doctor.name} (Ref: ${confirmedBookingCode})`
+                  )}`;
+                  if (scheduledStartTime) {
+                    const start = new Date(scheduledStartTime);
+                    const end = scheduledEndTime
+                      ? new Date(scheduledEndTime)
+                      : new Date(start.getTime() + 30 * 60000);
+                    const formatGCal = (d: Date) =>
+                      d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+                    calUrl += `&dates=${formatGCal(start)}/${formatGCal(end)}`;
+                  }
+                  calUrl += `&details=${encodeURIComponent(
+                    `SehatSetu Telehealth Consultation\nDoctor: Dr. ${doctor.name}\nBooking Ref: ${confirmedBookingCode}\nJoin online consultation from your dashboard at the scheduled time.`
+                  )}`;
+                  window.open(calUrl, "_blank");
                 }}
               >
                 Add to Calendar
