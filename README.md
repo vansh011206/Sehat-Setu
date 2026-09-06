@@ -75,7 +75,6 @@ This command resets test data and seeds:
 
 | Role | Phone Number | Password | Account Holder | Key Features |
 |---|---|---|---|---|
-| **Super Admin** | `+919876543210` | `Demo@1234` | System Administrator | Full platform analytics, revenue trends, doctor availability toggle, status overrides, audit logs |
 | **Doctor** | `+919876543212` | `Demo@1234` | Dr. Rajesh Sharma (Cardiology) | Today's schedule, patient directory, prescription composer, video consultation stage |
 | **Doctor** | `+919876543213` | `Demo@1234` | Dr. Priya Patel (Dermatology) | Consultation schedule, review history, patient record viewer |
 | **Patient** | `+919876543211` | `Demo@1234` | Aarav Kumar | Book slots, upcoming countdown timer, live WebRTC video room, Rx PDF downloads |
