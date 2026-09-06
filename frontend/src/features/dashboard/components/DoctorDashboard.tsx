@@ -21,7 +21,18 @@ import {
   Stethoscope,
   CalendarCheck2,
   Video,
+  Filter,
 } from "lucide-react";
+
+export const TIMEFRAME_OPTIONS = [
+  { key: "today", label: "Today" },
+  { key: "7d", label: "Last 7 Days" },
+  { key: "20d", label: "Last 20 Days" },
+  { key: "30d", label: "Last 30 Days" },
+  { key: "all", label: "All Time" },
+] as const;
+
+export type TimeframeKey = (typeof TIMEFRAME_OPTIONS)[number]["key"];
 import {
   Bar,
   BarChart,
@@ -119,12 +130,18 @@ export function DoctorDashboard() {
   const [cancelTargetId, setCancelTargetId] = useState<number | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
+  // Timeframe filter state (today, 7d, 20d, 30d, all)
+  const [timeframe, setTimeframe] = useState<TimeframeKey>("today");
+
   // Fetch Doctor Dashboard Telemetry
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ["dashboard-doctor"],
-    queryFn: dashboardApi.getDoctorDashboard,
+    queryKey: ["dashboard-doctor", timeframe],
+    queryFn: () => dashboardApi.getDoctorDashboard(timeframe),
     staleTime: 30000,
   });
+
+  const currentOption = TIMEFRAME_OPTIONS.find((o) => o.key === timeframe) || TIMEFRAME_OPTIONS[0];
+  const timeframeLabel = data?.timeframe_label || currentOption.label;
 
   // Fetch Doctor Patients List
   const { data: patientsData, isLoading: patientsLoading } = useQuery({
@@ -256,6 +273,45 @@ export function DoctorDashboard() {
         </div>
       </div>
 
+      {/* ─── Timeframe Filter Bar (Today, Last 7 Days, Last 20 Days, Last 30 Days, All Time) ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-border shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-teal-800 shrink-0">
+            <Filter size={15} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-ink">Dashboard Filter</span>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                {timeframeLabel}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted">Showing clinical metrics, consultations & trends for {timeframeLabel.toLowerCase()}</p>
+          </div>
+        </div>
+
+        {/* Small Filter Pill Buttons */}
+        <div className="flex items-center gap-1 sm:gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/80 overflow-x-auto">
+          {TIMEFRAME_OPTIONS.map((opt) => {
+            const isActive = timeframe === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setTimeframe(opt.key)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? "bg-teal-800 text-white shadow-xs scale-100"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-white/70"
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ─── Profile Incomplete Checklist Banner ─── */}
       {isProfileIncomplete && checklist && (
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 shadow-xs space-y-4">
@@ -348,7 +404,7 @@ export function DoctorDashboard() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
-                  Today's Slots
+                  {timeframe === "today" ? "Today's Slots" : `${timeframeLabel} Slots`}
                 </p>
                 <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-ink mt-0.5 tabular-nums">
                   {data?.today_schedule?.length ?? 0}
@@ -362,7 +418,7 @@ export function DoctorDashboard() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
-                  Completed
+                  {timeframe === "today" ? "Completed" : `${timeframeLabel} Completed`}
                 </p>
                 <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-emerald-700 mt-0.5 tabular-nums">
                   {data?.completed_today_count ?? 0}
@@ -376,7 +432,7 @@ export function DoctorDashboard() {
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] sm:text-xs font-bold text-muted uppercase tracking-wider truncate">
-                  Patients
+                  {timeframe === "today" ? "Patients" : `${timeframeLabel} Patients`}
                 </p>
                 <h3 className="text-xl sm:text-2xl font-extrabold font-heading text-sky-800 mt-0.5 tabular-nums">
                   {data?.total_patients_served ?? 0}
@@ -404,22 +460,26 @@ export function DoctorDashboard() {
         )}
       </div>
 
-      {/* ─── Today's Schedule Timeline ─── */}
+      {/* ─── Schedule Timeline ─── */}
       <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
           <div>
             <h2 className="text-lg font-bold font-heading text-ink flex items-center gap-2">
               <CalendarClock size={20} className="text-teal-700" />
-              Today's Consultation Schedule
+              {timeframe === "today"
+                ? "Today's Consultation Schedule"
+                : `${timeframeLabel} Consultation Queue`}
             </h2>
             <p className="text-xs text-muted">
-              Live patient consultation queue with immediate action controls
+              {timeframe === "today"
+                ? "Live patient consultation queue with immediate action controls"
+                : `Reviewing appointments and sessions recorded in ${timeframeLabel.toLowerCase()}`}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-slate-600 bg-surface px-3 py-1 rounded-full border border-border tabular-nums">
-              Today's Completed Revenue: ₹{Number(data?.today_revenue || 0).toFixed(0)}
+              {timeframe === "today" ? "Today's Completed Revenue" : `${timeframeLabel} Revenue`}: ₹{Number(data?.today_revenue || 0).toFixed(0)}
             </span>
           </div>
         </div>
@@ -437,12 +497,19 @@ export function DoctorDashboard() {
                 key={appt.id}
                 className="bg-surface p-4 sm:p-5 rounded-2xl border border-border flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all hover:border-teal-300"
               >
-                {/* Left: Time Range in tabular-nums */}
-                <div className="md:w-44 shrink-0 flex items-center gap-2 text-slate-900 font-bold text-sm tabular-nums">
+                {/* Left: Date & Time in tabular-nums */}
+                <div className="md:w-48 shrink-0 flex items-center gap-2.5 text-slate-900 font-bold text-sm tabular-nums">
                   <Clock size={16} className="text-teal-700 shrink-0" />
-                  <span>
-                    {formatIndianTime(appt.start_time)} - {formatIndianTime(appt.end_time)}
-                  </span>
+                  <div>
+                    {timeframe !== "today" && (
+                      <p className="text-xs text-teal-800 font-bold">
+                        {formatIndianDate(appt.start_time)}
+                      </p>
+                    )}
+                    <p className="text-xs text-slate-700 font-semibold">
+                      {formatIndianTime(appt.start_time)} - {formatIndianTime(appt.end_time)}
+                    </p>
+                  </div>
                 </div>
 
                 {/* Center: Patient Mini Profile */}
@@ -552,8 +619,16 @@ export function DoctorDashboard() {
         ) : (
           <EmptyState
             icon={CalendarCheck2}
-            title="No consultations scheduled for today"
-            description="Your daily schedule is clear. Check weekly slot rules or open new slots in Schedule."
+            title={
+              timeframe === "today"
+                ? "No consultations scheduled for today"
+                : `No consultations found for ${timeframeLabel.toLowerCase()}`
+            }
+            description={
+              timeframe === "today"
+                ? "Your daily schedule is clear. Check weekly slot rules or open new slots in Schedule."
+                : `No appointments were recorded in ${timeframeLabel.toLowerCase()}. Try selecting a broader timeframe like Last 20 Days or All Time.`
+            }
             action={
               <Link to="/schedule">
                 <Button variant="outline" size="sm" icon={CalendarClock}>
@@ -565,16 +640,20 @@ export function DoctorDashboard() {
         )}
       </div>
 
-      {/* ─── Monthly Trends Bar Chart (Recharts) ─── */}
+      {/* ─── Monthly/Daily Trends Bar Chart (Recharts) ─── */}
       <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-4">
           <div>
             <h2 className="text-lg font-bold font-heading text-ink flex items-center gap-2">
               <IndianRupee size={20} className="text-teal-700" />
-              Monthly Consultations & Telehealth Trends
+              {timeframe === "7d" || timeframe === "20d" || timeframe === "30d"
+                ? `Daily Consultations & Trends (${timeframeLabel})`
+                : "Monthly Consultations & Telehealth Trends"}
             </h2>
             <p className="text-xs text-muted">
-              Rolling 12-month analytics of scheduled consultations and completed sessions
+              {timeframe === "7d" || timeframe === "20d" || timeframe === "30d"
+                ? `Day-by-day analytics of scheduled consultations and completed sessions over ${timeframeLabel.toLowerCase()}`
+                : "Rolling 12-month analytics of scheduled consultations and completed sessions"}
             </p>
           </div>
         </div>

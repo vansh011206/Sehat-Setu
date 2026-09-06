@@ -48,7 +48,10 @@ class DoctorTodayAppointmentSerializer(serializers.Serializer):
 
 
 class DoctorDashboardSerializer(serializers.Serializer):
+    timeframe = serializers.CharField(required=False, default="today")
+    timeframe_label = serializers.CharField(required=False, default="Today")
     today_schedule = DoctorTodayAppointmentSerializer(many=True)
+    schedule = DoctorTodayAppointmentSerializer(many=True, required=False)
     upcoming_7_days_count = serializers.IntegerField()
     completed_today_count = serializers.IntegerField()
     total_patients_served = serializers.IntegerField()

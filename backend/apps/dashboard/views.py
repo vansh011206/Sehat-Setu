@@ -164,19 +164,54 @@ class DoctorDashboardView(APIView):
         today_start = timezone.make_aware(datetime.combine(today, time(0, 0)))
         today_end = timezone.make_aware(datetime.combine(today, time(23, 59, 59)))
 
-        # 1. Today's Appointments with Patient Details
-        today_appointments_qs = (
+        # Parse timeframe/days parameter
+        timeframe_param = request.query_params.get("timeframe", "").strip().lower()
+        days_param = request.query_params.get("days", "").strip().lower()
+
+        if days_param == "7" or timeframe_param == "7d":
+            days_count = 7
+            timeframe_key = "7d"
+            timeframe_label = "Last 7 Days"
+            range_start = timezone.make_aware(datetime.combine(today - timedelta(days=6), time(0, 0)))
+            range_end = today_end
+        elif days_param == "20" or timeframe_param == "20d":
+            days_count = 20
+            timeframe_key = "20d"
+            timeframe_label = "Last 20 Days"
+            range_start = timezone.make_aware(datetime.combine(today - timedelta(days=19), time(0, 0)))
+            range_end = today_end
+        elif days_param == "30" or timeframe_param == "30d":
+            days_count = 30
+            timeframe_key = "30d"
+            timeframe_label = "Last 30 Days"
+            range_start = timezone.make_aware(datetime.combine(today - timedelta(days=29), time(0, 0)))
+            range_end = today_end
+        elif timeframe_param == "all" or days_param == "all":
+            days_count = 3650
+            timeframe_key = "all"
+            timeframe_label = "All Time"
+            range_start = timezone.make_aware(datetime(2020, 1, 1, 0, 0))
+            range_end = timezone.make_aware(datetime(2035, 12, 31, 23, 59))
+        else:
+            days_count = 1
+            timeframe_key = "today"
+            timeframe_label = "Today"
+            range_start = today_start
+            range_end = today_end
+
+        # 1. Appointments with Patient Details for Selected Timeframe
+        appointments_qs = (
             Appointment.objects.filter(
                 doctor=doctor_profile,
-                start_time__range=(today_start, today_end),
+                start_time__range=(range_start, range_end),
             )
             .select_related("patient")
-            .order_by("start_time")
+            .order_by("-start_time" if days_count > 1 else "start_time")
         )
 
-        today_schedule = []
-        for appt in today_appointments_qs:
-            today_schedule.append(
+        schedule_list = []
+        for appt in appointments_qs:
+            schedule_list.append(
                 {
                     "id": appt.id,
                     "booking_code": appt.booking_code,
@@ -202,7 +237,7 @@ class DoctorDashboardView(APIView):
                 }
             )
 
-        # 2. Key Metrics
+        # 2. Key Metrics for Selected Timeframe
         next_7_days_end = now + timedelta(days=7)
         upcoming_7_days_count = Appointment.objects.filter(
             doctor=doctor_profile,
@@ -211,13 +246,12 @@ class DoctorDashboardView(APIView):
             status__in=[Appointment.Status.CONFIRMED, Appointment.Status.PENDING],
         ).count()
 
-        completed_today_count = Appointment.objects.filter(
-            doctor=doctor_profile,
-            start_time__range=(today_start, today_end),
-            status=Appointment.Status.COMPLETED,
+        completed_count = appointments_qs.filter(
+            status=Appointment.Status.COMPLETED
         ).count()
 
-        total_patients_served = (
+        period_patients = appointments_qs.values("patient_id").distinct().count()
+        all_time_patients = (
             Appointment.objects.filter(
                 doctor=doctor_profile,
                 status=Appointment.Status.COMPLETED,
@@ -226,65 +260,85 @@ class DoctorDashboardView(APIView):
             .distinct()
             .count()
         )
+        total_patients_served = period_patients if days_count > 1 else all_time_patients
 
-        today_revenue_agg = Appointment.objects.filter(
-            doctor=doctor_profile,
-            start_time__range=(today_start, today_end),
-            status=Appointment.Status.COMPLETED,
+        period_revenue_agg = appointments_qs.filter(
+            status=Appointment.Status.COMPLETED
         ).aggregate(total=Sum("fee_at_booking"))
+        period_revenue = period_revenue_agg["total"] or Decimal("0.00")
 
-        today_revenue = today_revenue_agg["total"] or Decimal("0.00")
+        # 3. Trends & Analytics (Daily for 7/20/30 days, Monthly for Today/All)
+        chart_data = []
+        if days_count in [7, 20, 30]:
+            # Generate daily metrics for each day in range
+            for i in range(days_count - 1, -1, -1):
+                d = today - timedelta(days=i)
+                d_start = timezone.make_aware(datetime.combine(d, time(0, 0)))
+                d_end = timezone.make_aware(datetime.combine(d, time(23, 59, 59)))
+                day_appts = Appointment.objects.filter(
+                    doctor=doctor_profile,
+                    start_time__range=(d_start, d_end),
+                )
+                d_count = day_appts.count()
+                d_completed = day_appts.filter(status=Appointment.Status.COMPLETED).count()
+                d_rev_agg = day_appts.filter(status=Appointment.Status.COMPLETED).aggregate(
+                    tot=Sum("fee_at_booking")
+                )
+                d_rev = d_rev_agg["tot"] or Decimal("0.00")
+                chart_data.append(
+                    {
+                        "month": d.strftime("%d %b"),
+                        "date_key": d.strftime("%Y-%m-%d"),
+                        "count": d_count,
+                        "completed": d_completed,
+                        "revenue": d_rev,
+                    }
+                )
+        else:
+            # 12-Month Rolling Overview
+            current_year = today.year
+            current_month = today.month
 
-        # 3. Monthly Appointments (Last 12 Months)
-        monthly_appointments = []
-        current_year = today.year
-        current_month = today.month
+            for i in range(11, -1, -1):
+                target_month = current_month - i
+                target_year = current_year
+                while target_month <= 0:
+                    target_month += 12
+                    target_year -= 1
 
-        for i in range(11, -1, -1):
-            # Calculate year and month for each of the last 12 months
-            target_month = current_month - i
-            target_year = current_year
-            while target_month <= 0:
-                target_month += 12
-                target_year -= 1
+                m_start = timezone.make_aware(
+                    datetime(target_year, target_month, 1, 0, 0, 0)
+                )
+                if target_month == 12:
+                    m_end = timezone.make_aware(
+                        datetime(target_year + 1, 1, 1, 0, 0, 0)
+                    ) - timedelta(microseconds=1)
+                else:
+                    m_end = timezone.make_aware(
+                        datetime(target_year, target_month + 1, 1, 0, 0, 0)
+                    ) - timedelta(microseconds=1)
 
-            # Month start and end
-            m_start = timezone.make_aware(
-                datetime(target_year, target_month, 1, 0, 0, 0)
-            )
-            if target_month == 12:
-                m_end = timezone.make_aware(
-                    datetime(target_year + 1, 1, 1, 0, 0, 0)
-                ) - timedelta(microseconds=1)
-            else:
-                m_end = timezone.make_aware(
-                    datetime(target_year, target_month + 1, 1, 0, 0, 0)
-                ) - timedelta(microseconds=1)
+                month_appts = Appointment.objects.filter(
+                    doctor=doctor_profile,
+                    start_time__range=(m_start, m_end),
+                )
 
-            month_appts = Appointment.objects.filter(
-                doctor=doctor_profile,
-                start_time__range=(m_start, m_end),
-            )
+                m_count = month_appts.count()
+                m_completed = month_appts.filter(status=Appointment.Status.COMPLETED).count()
+                m_revenue_agg = month_appts.filter(
+                    status=Appointment.Status.COMPLETED
+                ).aggregate(tot=Sum("fee_at_booking"))
+                m_revenue = m_revenue_agg["tot"] or Decimal("0.00")
 
-            m_count = month_appts.count()
-            m_completed = month_appts.filter(status=Appointment.Status.COMPLETED).count()
-            m_revenue_agg = month_appts.filter(
-                status=Appointment.Status.COMPLETED
-            ).aggregate(tot=Sum("fee_at_booking"))
-            m_revenue = m_revenue_agg["tot"] or Decimal("0.00")
-
-            month_label = m_start.strftime("%b %y")
-            date_key = m_start.strftime("%Y-%m")
-
-            monthly_appointments.append(
-                {
-                    "month": month_label,
-                    "date_key": date_key,
-                    "count": m_count,
-                    "completed": m_completed,
-                    "revenue": m_revenue,
-                }
-            )
+                chart_data.append(
+                    {
+                        "month": m_start.strftime("%b %y"),
+                        "date_key": m_start.strftime("%Y-%m"),
+                        "count": m_count,
+                        "completed": m_completed,
+                        "revenue": m_revenue,
+                    }
+                )
 
         # 4. Profile Completion Checklist
         has_availability = AvailabilityRule.objects.filter(
@@ -312,14 +366,17 @@ class DoctorDashboardView(APIView):
         )
 
         payload = {
-            "today_schedule": today_schedule,
+            "timeframe": timeframe_key,
+            "timeframe_label": timeframe_label,
+            "today_schedule": schedule_list,
+            "schedule": schedule_list,
             "upcoming_7_days_count": upcoming_7_days_count,
-            "completed_today_count": completed_today_count,
+            "completed_today_count": completed_count,
             "total_patients_served": total_patients_served,
             "avg_rating": doctor_profile.avg_rating,
             "rating_count": doctor_profile.rating_count,
-            "today_revenue": today_revenue,
-            "monthly_appointments": monthly_appointments,
+            "today_revenue": period_revenue,
+            "monthly_appointments": chart_data,
             "is_profile_complete": is_profile_complete,
             "profile_completion_checklist": {
                 "items": checklist_items,

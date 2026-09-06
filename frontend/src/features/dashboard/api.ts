@@ -61,7 +61,10 @@ export interface ProfileChecklist {
 }
 
 export interface DoctorDashboardData {
+  timeframe?: string;
+  timeframe_label?: string;
   today_schedule: DoctorTodayAppointment[];
+  schedule?: DoctorTodayAppointment[];
   upcoming_7_days_count: number;
   completed_today_count: number;
   total_patients_served: number;
@@ -118,8 +121,10 @@ export const dashboardApi = {
     return res.data;
   },
 
-  getDoctorDashboard: async (): Promise<DoctorDashboardData> => {
-    const res = await apiClient.get<DoctorDashboardData>("/dashboard/doctor/");
+  getDoctorDashboard: async (timeframe: string = "today"): Promise<DoctorDashboardData> => {
+    const res = await apiClient.get<DoctorDashboardData>("/dashboard/doctor/", {
+      params: { timeframe },
+    });
     return res.data;
   },
 
