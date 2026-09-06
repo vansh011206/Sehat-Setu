@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, Star } from "lucide-react";
 import { doctorsApi } from "./api";
@@ -11,6 +11,8 @@ interface ReviewModalProps {
   doctorName: string;
   open: boolean;
   onClose: () => void;
+  initialRating?: number;
+  initialReviewText?: string;
 }
 
 export function ReviewModal({
@@ -18,14 +20,25 @@ export function ReviewModal({
   doctorName,
   open,
   onClose,
+  initialRating = 5,
+  initialReviewText = "",
 }: ReviewModalProps) {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
-  const [rating, setRating] = useState<number>(5);
+  const [rating, setRating] = useState<number>(initialRating || 5);
   const [hoverRating, setHoverRating] = useState<number>(0);
-  const [reviewText, setReviewText] = useState("");
+  const [reviewText, setReviewText] = useState(initialReviewText || "");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setRating(initialRating || 5);
+      setReviewText(initialReviewText || "");
+      setErrorMessage(null);
+      setHoverRating(0);
+    }
+  }, [open, initialRating, initialReviewText]);
 
   const reviewMutation = useMutation({
     mutationFn: (data: { rating: number; review_text?: string }) =>
@@ -36,10 +49,13 @@ export function ReviewModal({
         title: "Review Submitted",
         message: "Thank you for sharing your consultation feedback!",
       });
-      // Invalidate doctor details and review list immediately
+      // Invalidate doctor details, review list, appointments and dashboards immediately
       queryClient.invalidateQueries({ queryKey: ["doctor-detail", doctorId] });
       queryClient.invalidateQueries({ queryKey: ["doctor-reviews", doctorId] });
       queryClient.invalidateQueries({ queryKey: ["doctors"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-patient"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-doctor"] });
       onClose();
     },
     onError: (err: any) => {

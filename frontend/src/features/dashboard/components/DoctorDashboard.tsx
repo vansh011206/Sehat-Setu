@@ -565,7 +565,8 @@ export function DoctorDashboard() {
                   )}
 
                   {appt.status !== "CANCELLED_BY_PATIENT" &&
-                    appt.status !== "CANCELLED_BY_DOCTOR" && (
+                    appt.status !== "CANCELLED_BY_DOCTOR" &&
+                    appt.status !== "COMPLETED" && (
                       <Link to={`/consult/${appt.id}`}>
                         <Button
                           variant="secondary"

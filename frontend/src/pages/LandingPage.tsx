@@ -239,14 +239,13 @@ export function LandingPage() {
               seamless clinic bookings and telehealth consultations.
             </p>
             <Link to="/register" className="inline-block w-full sm:w-auto">
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto border-white text-white hover:bg-white/10"
-                iconRight={ArrowRight}
+              <button
+                type="button"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-white text-teal-900 font-extrabold text-sm sm:text-base hover:bg-teal-50 hover:shadow-lg transition-all shadow-md cursor-pointer group"
               >
-                Create Free Account
-              </Button>
+                <span>Create Free Account</span>
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </button>
             </Link>
           </div>
         </div>

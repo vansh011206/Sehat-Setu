@@ -5,6 +5,7 @@ Views for Doctors, Specialties, and Review management in SehatSetu.
 from decimal import Decimal
 from django.db import connection
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -209,40 +210,59 @@ class DoctorReviewsListCreateView(APIView):
         serializer = ReviewSerializer(page, many=True, context={"request": request})
         return paginator.get_paginated_response(serializer.data)
 
-    @extend_schema(request=CreateReviewSerializer, responses={201: ReviewSerializer})
+    @extend_schema(request=CreateReviewSerializer, responses={201: ReviewSerializer, 200: ReviewSerializer})
     def post(self, request, pk):
         try:
             doctor = DoctorProfile.objects.get(pk=pk)
         except DoctorProfile.DoesNotExist:
             return Response({"detail": "Doctor not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # 1. Verify user is a patient with a COMPLETED appointment with this doctor
-        has_completed_appointment = Appointment.objects.filter(
-            doctor=doctor,
-            patient=request.user,
-            status=Appointment.Status.COMPLETED,
-        ).exists()
+        now = timezone.now()
+        # 1. Verify user is a patient with a completed consultation OR an appointment whose scheduled time has arrived/passed
+        has_eligible_appointment = (
+            Appointment.objects.filter(
+                doctor=doctor,
+                patient=request.user,
+            )
+            .filter(
+                Q(status=Appointment.Status.COMPLETED)
+                | (
+                    ~Q(
+                        status__in=[
+                            Appointment.Status.CANCELLED_BY_PATIENT,
+                            Appointment.Status.CANCELLED_BY_DOCTOR,
+                        ]
+                    )
+                    & (Q(start_time__lte=now) | Q(end_time__lte=now))
+                )
+            )
+            .exists()
+        )
 
-        if not has_completed_appointment:
+        if not has_eligible_appointment:
             return Response(
                 {
-                    "detail": "You can only review doctors after completing an appointment with them."
+                    "detail": "You can only review doctors after your scheduled appointment time has arrived or consultation has completed."
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # 2. Check if already reviewed (One review per patient per doctor)
-        if Review.objects.filter(doctor=doctor, patient=request.user).exists():
+        # 2. Check if already reviewed: update existing review instead of 409 conflict
+        existing_review = Review.objects.filter(doctor=doctor, patient=request.user).first()
+        if existing_review:
+            serializer = CreateReviewSerializer(existing_review, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            review = serializer.save()
+            doctor.update_rating_stats()
             return Response(
-                {
-                    "detail": "You have already submitted a review for this doctor."
-                },
-                status=status.HTTP_409_CONFLICT,
+                ReviewSerializer(review, context={"request": request}).data,
+                status=status.HTTP_200_OK,
             )
 
         serializer = CreateReviewSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         review = serializer.save(doctor=doctor, patient=request.user)
+        doctor.update_rating_stats()
 
         return Response(
             ReviewSerializer(review, context={"request": request}).data,

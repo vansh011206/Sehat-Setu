@@ -365,6 +365,8 @@ class DoctorDashboardView(APIView):
             doctor_profile.is_profile_complete and has_availability
         )
 
+        doctor_profile.update_rating_stats()
+
         payload = {
             "timeframe": timeframe_key,
             "timeframe_label": timeframe_label,

@@ -90,6 +90,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     doctor = DoctorListSerializer(read_only=True)
     patient = UserMinimalSerializer(read_only=True)
+    is_past = serializers.SerializerMethodField()
+    patient_review = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
@@ -104,6 +106,8 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "cancellation_reason",
             "fee_at_booking",
             "symptoms",
+            "is_past",
+            "patient_review",
             "created_at",
             "updated_at",
         )
@@ -115,6 +119,27 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "status",
             "cancellation_reason",
             "fee_at_booking",
+            "is_past",
+            "patient_review",
             "created_at",
             "updated_at",
         )
+
+    def get_is_past(self, obj) -> bool:
+        return obj.end_time <= timezone.now() or obj.status == Appointment.Status.COMPLETED
+
+    def get_patient_review(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user or not request.user.is_authenticated:
+            return None
+        if request.user.id == obj.patient_id or request.user == obj.patient:
+            from apps.doctors.models import Review
+            review = Review.objects.filter(doctor_id=obj.doctor_id, patient=request.user).first()
+            if review:
+                return {
+                    "id": review.id,
+                    "rating": review.rating,
+                    "review_text": review.review_text,
+                    "created_at": review.created_at.isoformat(),
+                }
+        return None

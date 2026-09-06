@@ -7,12 +7,14 @@ import {
   IndianRupee,
   MapPin,
   RefreshCw,
+  Star,
   Stethoscope,
   Video,
   XCircle,
 } from "lucide-react";
 import type { Appointment, AppointmentStatus } from "../features/bookings/api";
 import { bookingsApi } from "../features/bookings/api";
+import { ReviewModal } from "../features/doctors/ReviewModal";
 import { AppLayout } from "../layouts/AppLayout";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -37,6 +39,7 @@ export function AppointmentsPage() {
 
   const [activeTab, setActiveTab] = useState<"upcoming" | "past" | "all">("upcoming");
   const [cancellingAppointment, setCancellingAppointment] = useState<Appointment | null>(null);
+  const [reviewingAppointment, setReviewingAppointment] = useState<Appointment | null>(null);
   const [cancelReasonPreset, setCancelReasonPreset] = useState(CANCELLATION_REASONS[0]);
   const [cancelCustomNotes, setCancelCustomNotes] = useState("");
 
@@ -173,7 +176,11 @@ export function AppointmentsPage() {
             {appointments.map((apt) => {
               const startDate = new Date(apt.start_time);
               const endDate = new Date(apt.end_time);
-              const isFuture = startDate > new Date();
+              const now = new Date();
+              const isFuture = startDate > now;
+              const isPast = endDate <= now || apt.status === "COMPLETED" || !!apt.is_past;
+              const isCancelled =
+                apt.status === "CANCELLED_BY_PATIENT" || apt.status === "CANCELLED_BY_DOCTOR";
               const canCancel =
                 (apt.status === "CONFIRMED" || apt.status === "PENDING") && isFuture;
 
@@ -241,30 +248,59 @@ export function AppointmentsPage() {
 
                   {/* Right Actions */}
                   <div className="flex items-center justify-end gap-2 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 shrink-0 w-full md:w-auto">
-                    {apt.status !== "CANCELLED_BY_PATIENT" &&
-                      apt.status !== "CANCELLED_BY_DOCTOR" && (
-                        <Link to={`/consult/${apt.id}`} className="w-full sm:w-auto">
+                    {isPast ? (
+                      !isCancelled && (
+                        apt.patient_review ? (
                           <Button
-                            variant="primary"
+                            variant="outline"
                             size="sm"
-                            icon={Video}
-                            className="bg-teal-800 hover:bg-teal-900 shadow-xs w-full sm:w-auto min-h-[44px]"
+                            icon={Star}
+                            onClick={() => setReviewingAppointment(apt)}
+                            className="border-amber-300 bg-amber-50/80 text-amber-900 hover:bg-amber-100 font-bold w-full sm:w-auto min-h-[44px]"
+                            title="View or update your consultation review"
                           >
-                            Enter Room
+                            Rated ★ {Number(apt.patient_review.rating).toFixed(1)}
                           </Button>
-                        </Link>
-                      )}
+                        ) : (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            icon={Star}
+                            onClick={() => setReviewingAppointment(apt)}
+                            className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold shadow-xs w-full sm:w-auto min-h-[44px]"
+                            title="Rate doctor and share consultation feedback"
+                          >
+                            Rate & Review
+                          </Button>
+                        )
+                      )
+                    ) : (
+                      <>
+                        {!isCancelled && (
+                          <Link to={`/consult/${apt.id}`} className="w-full sm:w-auto">
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              icon={Video}
+                              className="bg-teal-800 hover:bg-teal-900 shadow-xs w-full sm:w-auto min-h-[44px]"
+                            >
+                              Enter Room
+                            </Button>
+                          </Link>
+                        )}
 
-                    {canCancel && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon={XCircle}
-                        onClick={() => setCancellingAppointment(apt)}
-                        className="text-red-600 hover:bg-red-50"
-                      >
-                        Cancel Slot
-                      </Button>
+                        {canCancel && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={XCircle}
+                            onClick={() => setCancellingAppointment(apt)}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            Cancel Slot
+                          </Button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -358,6 +394,18 @@ export function AppointmentsPage() {
               </div>
             </div>
           </Modal>
+        )}
+
+        {/* ─── Doctor Rating & Review Modal ─── */}
+        {reviewingAppointment && (
+          <ReviewModal
+            open={!!reviewingAppointment}
+            onClose={() => setReviewingAppointment(null)}
+            doctorId={reviewingAppointment.doctor.id}
+            doctorName={reviewingAppointment.doctor.name}
+            initialRating={reviewingAppointment.patient_review?.rating || 5}
+            initialReviewText={reviewingAppointment.patient_review?.review_text || ""}
+          />
         )}
       </div>
     </AppLayout>

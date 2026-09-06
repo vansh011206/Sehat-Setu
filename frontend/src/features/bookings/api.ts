@@ -28,6 +28,13 @@ export interface Appointment {
   cancellation_reason?: string;
   fee_at_booking: string | number;
   symptoms?: string;
+  is_past?: boolean;
+  patient_review?: {
+    id: number;
+    rating: number;
+    review_text?: string;
+    created_at: string;
+  } | null;
   created_at: string;
   updated_at: string;
 }

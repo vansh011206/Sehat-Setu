@@ -400,35 +400,53 @@ export function PatientDashboard() {
                 </div>
               ) : (
                 <div className="text-sm font-bold text-teal-900 bg-white px-4 py-2 rounded-xl border border-teal-200">
-                  Ready for Consultation
+                  {upcomingAppt && (new Date(upcomingAppt.end_time) <= new Date() || upcomingAppt.status === "COMPLETED" || !!upcomingAppt.is_past)
+                    ? "Consultation Completed"
+                    : "Ready for Consultation"}
                 </div>
               )}
 
               <div className="flex flex-col w-full gap-2">
-                <Link to={`/consult/${upcomingAppt.id}`} className="w-full">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    icon={Video}
-                    className="w-full justify-center font-bold shadow-xs"
-                    title="Enter Telehealth Consultation Room"
-                  >
-                    Join Video Consult
-                  </Button>
-                </Link>
+                {upcomingAppt && (new Date(upcomingAppt.end_time) <= new Date() || upcomingAppt.status === "COMPLETED" || !!upcomingAppt.is_past) ? (
+                  <Link to="/appointments" className="w-full">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={Star}
+                      className="w-full justify-center font-bold bg-amber-500 hover:bg-amber-600 text-slate-950 shadow-xs"
+                      title="Rate doctor and share consultation feedback"
+                    >
+                      Rate & Review Doctor
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <Link to={`/consult/${upcomingAppt.id}`} className="w-full">
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon={Video}
+                        className="w-full justify-center font-bold shadow-xs"
+                        title="Enter Telehealth Consultation Room"
+                      >
+                        Join Video Consult
+                      </Button>
+                    </Link>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={X}
-                  onClick={() => {
-                    setSelectedApptId(upcomingAppt.id);
-                    setCancelModalOpen(true);
-                  }}
-                  className="w-full justify-center text-rose-600 hover:text-rose-700 hover:bg-rose-50"
-                >
-                  Cancel Appointment
-                </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={X}
+                      onClick={() => {
+                        setSelectedApptId(upcomingAppt.id);
+                        setCancelModalOpen(true);
+                      }}
+                      className="w-full justify-center text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                    >
+                      Cancel Appointment
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
